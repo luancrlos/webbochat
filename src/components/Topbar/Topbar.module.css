@@ -1,0 +1,33 @@
+.topbar {
+    display: flex;
+    flex-flow: row;
+    width: 100%;
+    box-sizing: border-box;
+    border-bottom: 1px solid gray;
+    align-items: center;
+}
+
+.logo {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    column-gap: 12px;
+    padding: 4px 12px;
+    box-sizing: border-box;
+}
+
+.logo img {
+    height: auto;
+    width: 40px;
+}
+
+.logo h3 {
+    width: fit-content;
+    margin: 0;
+}
+
+.topbar button {
+    margin-right: 20px;
+    flex: 0 1 80px;
+}

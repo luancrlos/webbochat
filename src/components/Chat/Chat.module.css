@@ -1,0 +1,98 @@
+.containerEmpty {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+}
+
+.containerEmpty h3{
+    margin: 0;
+    width: inherit;
+    text-align: center;
+    font-weight: 400;
+    color: gray;
+}
+
+.container {
+    height: 100%;
+    max-height: 100%;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.header {
+    flex: 0 1 auto;
+    display: flex;
+    flex-direction: row;
+    height: 52px;
+    border-bottom: 1px solid gray;
+    padding: 8px 8px;
+    column-gap: 18px;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.header img {
+    height: 35px;
+    width: auto;
+}
+
+.header .info {
+    display: flex;
+    flex-direction: row;
+    column-gap: 8px;
+    align-items: center;
+}
+
+.header .info h5 {
+    margin: 0;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 92px);
+    max-height: calc(100% - 92px);
+    box-sizing: border-box;
+    row-gap: 6px;
+    padding: 8px 60px;
+    overflow: auto;
+    position: absolute;
+}
+
+.content .group {
+    display: flex;
+    flex-direction: column;
+}
+
+.content .group .message {
+    width: fit-content;
+    max-width: 60%;
+    box-sizing: border-box;
+    margin: 0;
+    border: 1px solid gray;
+    padding: 4px 8px;
+    word-break: break-all;
+    border-radius: 8px;
+}
+
+.content .group .time {
+    color: gray;
+    font-size: small;
+}
+
+.footer {
+    margin-bottom: 4px;
+    width: 100%;
+    display: flex;
+    box-sizing: border-box;
+    justify-content: center;
+    position: absolute;
+    bottom: 0;
+}
+
+.footer input {
+    width: 50%;
+    box-sizing: border-box;
+    height: 36px;
+}
