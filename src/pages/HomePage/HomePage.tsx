@@ -6,11 +6,12 @@ import { User } from '../../services/User.service';
 import Chat from '../../components/Chat/Chat';
 
 const HomePage = () => {
+    const [currentFriend, setCurrentFriend] = useState<User>();
 
     const [friends, setFriends] = useState<User[]>([
         {
             name: 'Amanda Serique Pinheiro',
-            status: true
+            status: false
         },
         {
             name: 'Roberto Alves Neto',
@@ -22,7 +23,10 @@ const HomePage = () => {
         }
     ]);
 
-    const [currentFriend, setCurrentFriend] = useState<User>();
+    // const getFriendList = async() => {
+    //     const list = await UserService.getList();
+    //     setFriends(list);
+    // };
 
     return (
         <div className={styles.page}>
@@ -31,14 +35,16 @@ const HomePage = () => {
             </header>
             <div className={styles.content}>
                 <div>
-                    <FriendList friends={friends} onItemClick={setCurrentFriend} />
+                    {friends &&  
+                        <FriendList friends={friends} onItemClick={setCurrentFriend} />                    
+                    }
                 </div>
                 <div>
-                    <Chat friend={currentFriend} />
+                    <Chat currentFriend={currentFriend} />
                 </div>
             </div>
         </div>
     );
-}
+}   
 
 export default HomePage;

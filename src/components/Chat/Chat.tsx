@@ -1,14 +1,27 @@
 import styles from './Chat.module.css';
 import { User } from "../../services/User.service";
 import Status from '../Status/Status';
+import { ActionProps } from '../../services/User.service';
 import { useEffect, useRef, useState } from 'react';
 import { Message } from '../../services/Message.service';
+import { Search } from '../../pages/HomePage/Search';
+import { RabbitMQService } from '../../services/RabbitMQ.service';
 
 interface ChatProps {
     friend?: User;
 }
 
-const Chat = ({ friend }: ChatProps) => {
+export type MsgContent = {
+    pattern: string,
+    data: {
+        sender?: string,
+        receiver: string,
+        date?: string,
+        message?: string,
+    }
+};
+
+const Chat = ({ currentFriend }: ActionProps) => {
 
     const [messages, setMessages] = useState<Message[]>([
         {
@@ -55,30 +68,15 @@ const Chat = ({ friend }: ChatProps) => {
             content: 'ata mo',
             date: new Date(),
             fromFriend: true
-        },
-        {
-            content: 'kk',
-            date: new Date(),
-            fromFriend: true
-        },
-        {
-            content: '.',
-            date: new Date(),
-            fromFriend: true
-        },
-        {
-            content: 'oi',
-            date: new Date(),
-            fromFriend: true
-        },
-        {
-            content: '?',
-            date: new Date(),
-            fromFriend: true
         }
     ]);
 
     const [newMsg, setNewMsg] = useState<string>('');
+
+    useEffect(() => {
+        RabbitMQService.subscribe('message.send', () => {return});
+        RabbitMQService.subscribe('message.receive', () => {return});
+    }, []);
 
     const messagesRef = useRef<null | HTMLDivElement>(null);
     const scrollToBottom = () => {
@@ -89,6 +87,11 @@ const Chat = ({ friend }: ChatProps) => {
     const handleNewMsg = (e: React.ChangeEvent<HTMLInputElement>) => {
         setNewMsg(e.target.value);
     };
+
+    const chatHistory = (currentFriend: User) => {
+
+
+    }
 
     const dateToHour = (date: Date) => {
         return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
@@ -129,9 +132,11 @@ const Chat = ({ friend }: ChatProps) => {
             fromFriend: false
         }]);
         setNewMsg('');
+        // use the rabbitmq queue to send (publish) messages to a friend
+        RabbitMQService.subscribe('message.publish', () => {return});
     };
 
-    if (!friend)
+    if (!currentFriend)
         return (
             <div className={styles.containerEmpty}>
                 <h3>Start chatting with a friend from your list!</h3>
@@ -143,8 +148,8 @@ const Chat = ({ friend }: ChatProps) => {
             <div className={styles.header}>
                 <img src='user.png' alt='user' />
                 <div className={styles.info}>
-                    <h5>{friend.name}</h5>
-                    <Status status={friend.status}/>
+                    <h5>{currentFriend.name}</h5>
+                    <Status status={currentFriend.status}/>
                 </div>
             </div>
             <div className={styles.content}>
@@ -152,7 +157,7 @@ const Chat = ({ friend }: ChatProps) => {
             </div>
             <form className={styles.footer} onSubmit={(e) => sendMessage(e)}>
                 <input value={newMsg} onChange={(e) => handleNewMsg(e)}></input>
-                <button type='submit'>Send</button>
+                <button type='submit' onClick={() => sendMessage}>Send</button>
             </form>
         </div>
     )

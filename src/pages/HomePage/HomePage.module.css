@@ -11,3 +11,15 @@
     grid-template-columns: 28% 72%;
     height: inherit;
 }
+
+.search {
+    display: flex;
+    flex-direction: column;
+    margin: 0px 12px 4px 12px;
+}
+
+.inputSearch {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
