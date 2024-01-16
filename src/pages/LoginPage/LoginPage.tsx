@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './LoginPage.module.css';
+import { MessageService } from '../../services/Message.service';
+import { KeyService } from '../../services/Key.service';
+import { users } from '../../services/User.service';
 
 const LoginPage = () => {
 
@@ -40,7 +43,12 @@ const LoginPage = () => {
 
   const signIn = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    document.location.href = "/home";
+    for (let i=0; i<users.length; i++) {
+      if (username === users[i].username && password === users[i].password) {
+        localStorage.setItem('username', username);
+        document.location.href = "/home";
+      }
+    }
   }
 
   return (

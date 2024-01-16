@@ -3,12 +3,16 @@ import { User } from "../../services/User.service";
 import Status from '../Status/Status';
 import { ActionProps } from '../../services/User.service';
 import { useEffect, useRef, useState } from 'react';
-import { Message } from '../../services/Message.service';
+import { Message, MessageService } from '../../services/Message.service';
 import { Search } from '../../pages/HomePage/Search';
 import { RabbitMQService } from '../../services/RabbitMQ.service';
+import ICheckmark from '../SVG/Checkmark';
 
 interface ChatProps {
     friend?: User;
+    user?: User;
+    privKey: Uint8Array;
+    pubKey: Uint8Array;
 }
 
 export type MsgContent = {
@@ -21,62 +25,61 @@ export type MsgContent = {
     }
 };
 
-const Chat = ({ currentFriend }: ActionProps) => {
+const Chat = ({ user, friend, privKey, pubKey }: ChatProps) => {
 
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            content: 'Oi',
-            date: new Date(),
-            fromFriend: true
-        },
-        {
-            content: 'Oi',
-            date: new Date(),
-            fromFriend: false
-        },
-        {
-            content: 'Tudo bem?',
-            date: new Date(),
-            fromFriend: true
-        },
-        {
-            content: 'Sim e ctg?',
-            date: new Date(),
-            fromFriend: false
-        },
-        {
-            content: 'To bem',
-            date: new Date(),
-            fromFriend: true
-        },
-        {
-            content: 'Ta fazendo oq',
-            date: new Date(),
-            fromFriend: true
-        },
-        {
-            content: '?',
-            date: new Date(),
-            fromFriend: true
-        },
-        {
-            content: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
-            date: new Date(),
-            fromFriend: false
-        },
-        {
-            content: 'ata mo',
-            date: new Date(),
-            fromFriend: true
-        }
-    ]);
+    const [messages, setMessages] = useState<Message[]>([]);
 
+    const [friendKey, setFriendKey] = useState<Uint8Array>(new Uint8Array());
     const [newMsg, setNewMsg] = useState<string>('');
 
+    const [pendingMsg, setPendingMsg] = useState('');
+
     useEffect(() => {
-        RabbitMQService.subscribe('message.send', () => {return});
-        RabbitMQService.subscribe('message.receive', () => {return});
-    }, []);
+        if (user) getMessages();
+    }, [user]);
+
+    useEffect(() => {
+        setMessages([]);
+    }, [friend]);
+
+    const updateNewMessage = (msg: string) => {
+        setPendingMsg(msg);
+    }
+
+    useEffect(() => {
+
+    }, [])
+
+    useEffect(() => {
+        if (user) RabbitMQService.subscribe(user.username, updateNewMessage);
+    }, [user]);
+
+    useEffect(() => {
+        if (pendingMsg != '') {
+            verifyNewMessage(pendingMsg);
+            setPendingMsg('');
+        }
+    }, [pendingMsg])
+
+    const getMessages = () => {
+        setInterval(() => {
+            const obj = {
+                receiver: user?.username
+            }
+            RabbitMQService.publish('message/receive', JSON.stringify(obj))
+        }, 2000);
+    };
+    
+    const verifyNewMessage = (msg: string) => {
+        const obj: MsgContent = JSON.parse(msg);
+        if (!obj || !obj.data) return;
+        console.log(obj.data.sender);
+        console.log(friend?.username);
+        if (obj.data.sender === friend?.username) {
+            console.log(obj.data.message);
+            updateMessages(obj.data.message || '', true);
+        };
+    };
 
     const messagesRef = useRef<null | HTMLDivElement>(null);
     const scrollToBottom = () => {
@@ -114,7 +117,12 @@ const Chat = ({ currentFriend }: ActionProps) => {
                                 style={{ alignSelf, backgroundColor, color }}>
                                     {msg.content}
                             </p>
-                            <span className={styles.time} style={{ alignSelf }}>{dateToHour(msg.date)}</span>
+                            <div style={{ alignSelf }}>
+                                {msg.status === '1' && (
+                                    <ICheckmark width={12} />
+                                )}
+                                <span className={styles.time}>{dateToHour(msg.date)}</span>
+                            </div>
                         </div>
                     )
                 }))}
@@ -126,17 +134,21 @@ const Chat = ({ currentFriend }: ActionProps) => {
     const sendMessage = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!newMsg) return;
-        setMessages([...messages, {
-            content: newMsg,
-            date: new Date(),
-            fromFriend: false
-        }]);
+        MessageService.sendMessage(newMsg, privKey, pubKey, user?.username || '', friend?.username || '')
+        updateMessages(newMsg, false);
         setNewMsg('');
-        // use the rabbitmq queue to send (publish) messages to a friend
-        RabbitMQService.subscribe('message.publish', () => {return});
     };
 
-    if (!currentFriend)
+    const updateMessages = (msg: string, fromFriend: boolean) => {
+        setMessages([...messages, {
+            content: msg,
+            date: new Date(),
+            fromFriend,
+            status: '0'
+        }]);
+    }
+
+    if (!friend)
         return (
             <div className={styles.containerEmpty}>
                 <h3>Start chatting with a friend from your list!</h3>
@@ -148,8 +160,8 @@ const Chat = ({ currentFriend }: ActionProps) => {
             <div className={styles.header}>
                 <img src='user.png' alt='user' />
                 <div className={styles.info}>
-                    <h5>{currentFriend.name}</h5>
-                    <Status status={currentFriend.status}/>
+                    <h5>{friend.name}</h5>
+                    <Status status={friend.status}/>
                 </div>
             </div>
             <div className={styles.content}>

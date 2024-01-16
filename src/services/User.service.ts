@@ -10,10 +10,33 @@ export interface ActionProps {
 export interface User {
     name: string;
     status: boolean;
+    username: string;
+    password: string;
     messages?: Message[];
     key?: boolean;
     isClicked?: boolean;
 }
+
+export const users: User[] = [
+    {
+        name: 'Amanda Serique Pinheiro',
+        status: false,
+        username: 'amanda',
+        password: 'Admin1234'
+    },
+    {
+        name: 'Roberto Alves Neto',
+        status: false,
+        username: 'roberto',
+        password: 'Admin1234'
+    },
+    {
+        name: 'Luan',
+        status: false,
+        username: 'luan',
+        password: 'Admin1234'
+    }
+];
 
 export abstract class UserService {
  

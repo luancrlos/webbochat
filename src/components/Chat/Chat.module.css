@@ -58,6 +58,7 @@
     padding: 8px 60px;
     overflow: auto;
     position: absolute;
+    width: 100%;
 }
 
 .content .group {
