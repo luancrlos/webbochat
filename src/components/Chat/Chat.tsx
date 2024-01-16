@@ -35,24 +35,29 @@ const Chat = ({ user, friend, privKey, pubKey }: ChatProps) => {
     const [pendingMsg, setPendingMsg] = useState('');
 
     useEffect(() => {
-        if (user) getMessages();
+        if (user) {
+            getMessages();
+            RabbitMQService.subscribe(user.username, updateNewMessage);
+        }
     }, [user]);
 
     useEffect(() => {
-        setMessages([]);
+        if (!friend || !user) return;
+
+        const data = localStorage.getItem(`friend-${user.username}-${friend.username}`);
+        if (!data) setMessages([]);
+        else setMessages(JSON.parse(data));
     }, [friend]);
+
+    useEffect(() => {
+        if (!friend || !user) return;
+
+        localStorage.setItem(`friend-${user.username}-${friend.username}`, JSON.stringify(messages));
+    }, [messages]);
 
     const updateNewMessage = (msg: string) => {
         setPendingMsg(msg);
     }
-
-    useEffect(() => {
-
-    }, [])
-
-    useEffect(() => {
-        if (user) RabbitMQService.subscribe(user.username, updateNewMessage);
-    }, [user]);
 
     useEffect(() => {
         if (pendingMsg != '') {
