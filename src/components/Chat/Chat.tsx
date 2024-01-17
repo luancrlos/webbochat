@@ -7,6 +7,7 @@ import { Message, MessageService } from '../../services/Message.service';
 import { Search } from '../../pages/HomePage/Search';
 import { RabbitMQService } from '../../services/RabbitMQ.service';
 import ICheckmark from '../SVG/Checkmark';
+import * as CryptoJS from 'crypto-js';
 
 interface ChatProps {
     friend?: User;
@@ -21,7 +22,7 @@ export type MsgContent = {
         sender?: string,
         receiver: string,
         date?: string,
-        message?: string,
+        message?: any,
     }
 };
 
@@ -34,9 +35,13 @@ const Chat = ({ user, friend, privKey, pubKey }: ChatProps) => {
 
     const [pendingMsg, setPendingMsg] = useState('');
 
+    const scrollToBottom = () => {
+        messagesRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
     useEffect(() => {
         if (user) {
-            getMessages();
+            publishToMessageQueue();
             RabbitMQService.subscribe(user.username, updateNewMessage);
         }
     }, [user]);
@@ -46,10 +51,20 @@ const Chat = ({ user, friend, privKey, pubKey }: ChatProps) => {
 
         const data = localStorage.getItem(`friend-${user.username}-${friend.username}`);
         if (!data) setMessages([]);
-        else setMessages(JSON.parse(data));
+        else {
+            const obj = JSON.parse(data) as Message[];
+            const handledData = obj.map((value) => {
+                if (value.fromFriend) {
+                    value.content = MessageService.decodeMessage(value.content, privKey, pubKey);
+                }
+                return {...value, date: new Date(value.date)}
+            });
+            setMessages(handledData);
+        }
     }, [friend]);
 
     useEffect(() => {
+        scrollToBottom();
         if (!friend || !user) return;
 
         localStorage.setItem(`friend-${user.username}-${friend.username}`, JSON.stringify(messages));
@@ -66,7 +81,7 @@ const Chat = ({ user, friend, privKey, pubKey }: ChatProps) => {
         }
     }, [pendingMsg])
 
-    const getMessages = () => {
+    const publishToMessageQueue = () => {
         setInterval(() => {
             const obj = {
                 receiver: user?.username
@@ -75,31 +90,21 @@ const Chat = ({ user, friend, privKey, pubKey }: ChatProps) => {
         }, 2000);
     };
     
-    const verifyNewMessage = (msg: string) => {
+    const verifyNewMessage = (msg: any) => {
         const obj: MsgContent = JSON.parse(msg);
         if (!obj || !obj.data) return;
-        console.log(obj.data.sender);
-        console.log(friend?.username);
         if (obj.data.sender === friend?.username) {
-            console.log(obj.data.message);
             updateMessages(obj.data.message || '', true);
         };
     };
 
     const messagesRef = useRef<null | HTMLDivElement>(null);
-    const scrollToBottom = () => {
-        messagesRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-    useEffect(scrollToBottom, [messages]);
+
+    
 
     const handleNewMsg = (e: React.ChangeEvent<HTMLInputElement>) => {
         setNewMsg(e.target.value);
     };
-
-    const chatHistory = (currentFriend: User) => {
-
-
-    }
 
     const dateToHour = (date: Date) => {
         return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
@@ -115,7 +120,7 @@ const Chat = ({ user, friend, privKey, pubKey }: ChatProps) => {
                     const color = msg.fromFriend ? 'white' : 'black';
 
                     return (
-                        <div className={styles.group}>
+                        <div className={styles.group} key={index}>
                             <p
                                 className={styles.message}
                                 key={index}
@@ -145,8 +150,9 @@ const Chat = ({ user, friend, privKey, pubKey }: ChatProps) => {
     };
 
     const updateMessages = (msg: string, fromFriend: boolean) => {
+        const messageDecrypted = MessageService.decodeMessage(msg, privKey, pubKey);
         setMessages([...messages, {
-            content: msg,
+            content: !fromFriend ? msg : messageDecrypted,
             date: new Date(),
             fromFriend,
             status: '0'
