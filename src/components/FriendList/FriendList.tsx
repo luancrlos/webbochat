@@ -30,6 +30,7 @@ const FriendList = ({ friends, onItemClick }: FriendListProps) => {
 
     const onClickChat = (friend: User) => {
         onItemClick(friend); 
+        //implementando mudanças nos componentes HomePage e LoginPage para obter o usuário e utilizar no obj
         const publicKey = generateKey();
         const obj = {
             receiver: friend.name,
