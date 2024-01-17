@@ -1,5 +1,11 @@
 import * as secp from '@noble/secp256k1';
 
+export interface KeyProps {
+    sender: string;
+    receiver: string;
+    publickey: string;
+}
+
 export class KeyService {
     static genPrivateKey = () => {
         const privKey = secp.utils.randomPrivateKey();

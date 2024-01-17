@@ -3,7 +3,7 @@ import { User } from "../../services/User.service";
 import { ActionProps } from '../../services/User.service';
 import { useEffect, useState } from 'react';
 import Status from '../Status/Status';
-import { Search } from '../../pages/HomePage/Search';
+import { KeyService } from '../../services/Key.service';
 import { RabbitMQService } from '../../services/RabbitMQ.service';
 
 interface FriendListProps extends ActionProps {
@@ -12,7 +12,6 @@ interface FriendListProps extends ActionProps {
 };
 
 const FriendList = ({ friends, onItemClick }: FriendListProps) => {
-    const [currentFriend, setCurrentFriend] = useState<User>();
     const [onlineCount, setOnlineCount] = useState<number>(0);
 
     useEffect(() => {
@@ -22,22 +21,23 @@ const FriendList = ({ friends, onItemClick }: FriendListProps) => {
         setOnlineCount(count);
     }, [friends]);
 
-    // useEffect(() => {
-    //     RabbitMQService.subscribe('message.receive', () => {return});
-    // }, []);
+    const generateKey = () => {
+        const privKey = KeyService.genPrivateKey();
+        const pubKey = KeyService.genPublicKey(privKey);
+        const key = KeyService.keyToString(pubKey);
+        return key;
+    };
 
     const onClickChat = (friend: User) => {
         onItemClick(friend); 
-        RabbitMQService.subscribe('message.receive', () => {return});
+        const publicKey = generateKey();
+        const obj = {
+            receiver: friend.name,
+            publickey: publicKey, 
+        }
+        const data = JSON.stringify(obj);
+        RabbitMQService.publish('message/publickey', data);
     };
-
-    //2)
-    //if that friend is clicked for the first time after login
-    //generate a key for encryption
-
-    //3)
-    //create a function to display the message history
-    //every time a friend is clicked, call this function and display the message history
 
     return (
         <div className={styles.container}>
