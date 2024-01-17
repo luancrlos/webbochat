@@ -7,11 +7,12 @@ import { KeyService } from '../../services/Key.service';
 import { RabbitMQService } from '../../services/RabbitMQ.service';
 
 interface FriendListProps extends ActionProps {
+    username: string;
     friends: User[];
     onItemClick: (friend: User) => void;
 };
 
-const FriendList = ({ friends, onItemClick }: FriendListProps) => {
+const FriendList = ({ friends, onItemClick, username }: FriendListProps) => {
     const [onlineCount, setOnlineCount] = useState<number>(0);
 
     useEffect(() => {
@@ -30,13 +31,14 @@ const FriendList = ({ friends, onItemClick }: FriendListProps) => {
 
     const onClickChat = (friend: User) => {
         onItemClick(friend); 
-        //implementando mudanças nos componentes HomePage e LoginPage para obter o usuário e utilizar no obj
         const publicKey = generateKey();
         const obj = {
-            receiver: friend.name,
+            sender: username,
+            receiver: friend.username,
             publickey: publicKey, 
         }
         const data = JSON.stringify(obj);
+        console.log(data);
         RabbitMQService.publish('message/publickey', data);
     };
 

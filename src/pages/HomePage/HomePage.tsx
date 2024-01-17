@@ -14,16 +14,10 @@ interface HomePageProps {
 
 const HomePage = () => {
     const [currentFriend, setCurrentFriend] = useState<User>();
-
     const [privKey, setPrivKey] = useState<Uint8Array>(new Uint8Array());
     const [pubKey, setPubKey] = useState<Uint8Array>(new Uint8Array());
     const [user, setUser] = useState<User>();
     const [username, setUsername] = useState('');
-
-    // const getFriendList = async() => {
-    //     const list = await UserService.getList();
-    //     setFriends(list);
-    // };
 
     useEffect(() => {
         const setKeys = () => {
@@ -54,7 +48,7 @@ const HomePage = () => {
             <div className={styles.content}>
                 <div>
                     {users &&  
-                        <FriendList friends={users} onItemClick={setCurrentFriend} />                    
+                        <FriendList friends={users} onItemClick={setCurrentFriend} username={username}/>                    
                     }
                 </div>
                 <div>

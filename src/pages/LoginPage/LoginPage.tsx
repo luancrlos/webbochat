@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import styles from './LoginPage.module.css';
-import { MessageService } from '../../services/Message.service';
-import { KeyService } from '../../services/Key.service';
 import { users } from '../../services/User.service';
 
 const LoginPage = () => {
