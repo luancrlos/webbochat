@@ -28,4 +28,11 @@ export class KeyService {
     static getKey = () => {
         return localStorage.getItem('privKey');
     }
+
+    static getPubKey = () => {
+        const privKey = KeyService.genPrivateKey();
+        const pubKey = KeyService.genPublicKey(privKey);
+        const key = KeyService.keyToString(pubKey);
+        return key;  
+    };
 }

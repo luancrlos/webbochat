@@ -1,10 +1,8 @@
 import styles from './Chat.module.css';
 import { User } from "../../services/User.service";
 import Status from '../Status/Status';
-import { ActionProps } from '../../services/User.service';
 import { useEffect, useRef, useState } from 'react';
 import { Message, MessageService } from '../../services/Message.service';
-import { Search } from '../../pages/HomePage/Search';
 import { RabbitMQService } from '../../services/RabbitMQ.service';
 import ICheckmark from '../SVG/Checkmark';
 import * as CryptoJS from 'crypto-js';
@@ -13,7 +11,8 @@ interface ChatProps {
     friend?: User;
     user?: User;
     privKey: Uint8Array;
-    pubKey: Uint8Array;
+    receivedPK: Uint8Array;
+    sentPK: string | undefined;
 }
 
 export type MsgContent = {
@@ -26,13 +25,10 @@ export type MsgContent = {
     }
 };
 
-const Chat = ({ user, friend, privKey, pubKey }: ChatProps) => {
+const Chat = ({ user, friend, privKey, receivedPK, sentPK }: ChatProps) => {
 
     const [messages, setMessages] = useState<Message[]>([]);
-
-    const [friendKey, setFriendKey] = useState<Uint8Array>(new Uint8Array());
     const [newMsg, setNewMsg] = useState<string>('');
-
     const [pendingMsg, setPendingMsg] = useState('');
 
     const scrollToBottom = () => {
@@ -55,7 +51,7 @@ const Chat = ({ user, friend, privKey, pubKey }: ChatProps) => {
             const obj = JSON.parse(data) as Message[];
             const handledData = obj.map((value) => {
                 if (value.fromFriend) {
-                    value.content = MessageService.decodeMessage(value.content, privKey, pubKey);
+                    value.content = MessageService.decodeMessage(value.content, privKey, receivedPK);
                 }
                 return {...value, date: new Date(value.date)}
             });
@@ -80,6 +76,19 @@ const Chat = ({ user, friend, privKey, pubKey }: ChatProps) => {
             setPendingMsg('');
         }
     }, [pendingMsg])
+
+    const sendPublicKey = () => {
+        const obj = {
+            sender: user?.username,
+            receiver: friend?.username,
+            publickey: sentPK, 
+        }
+        console.log(sentPK);
+        const data = JSON.stringify(obj);
+        RabbitMQService.publish('message/publickey', data);
+        console.log(data);
+
+    };
 
     const publishToMessageQueue = () => {
         setInterval(() => {
@@ -144,13 +153,14 @@ const Chat = ({ user, friend, privKey, pubKey }: ChatProps) => {
     const sendMessage = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!newMsg) return;
-        MessageService.sendMessage(newMsg, privKey, pubKey, user?.username || '', friend?.username || '')
+        MessageService.sendMessage(newMsg, privKey, receivedPK, user?.username || '', friend?.username || '')
         updateMessages(newMsg, false);
         setNewMsg('');
+        sendPublicKey();
     };
 
     const updateMessages = (msg: string, fromFriend: boolean) => {
-        const messageDecrypted = MessageService.decodeMessage(msg, privKey, pubKey);
+        const messageDecrypted = MessageService.decodeMessage(msg, privKey, receivedPK);
         setMessages([...messages, {
             content: !fromFriend ? msg : messageDecrypted,
             date: new Date(),

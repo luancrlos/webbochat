@@ -2,7 +2,12 @@ import React, { useEffect, useState } from 'react';
 import styles from './LoginPage.module.css';
 import { users } from '../../services/User.service';
 
-const LoginPage = () => {
+export interface LoginProps {
+  firstLogin: boolean;
+  setFirstLogin: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const LoginPage = ({firstLogin, setFirstLogin}: LoginProps) => {
 
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -45,6 +50,7 @@ const LoginPage = () => {
       if (username === users[i].username && password === users[i].password) {
         localStorage.setItem('username', username);
         document.location.href = "/home";
+        if(firstLogin) setFirstLogin(true);
       }
     }
   }

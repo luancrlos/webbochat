@@ -8,14 +8,20 @@ import { KeyService } from '../../services/Key.service';
 
 export type UUID = `${string}-${string}-${string}-${string}-${string}`;
 
+//PK = abreviação para public key
+//Modificação dos nomes das constantes para diferenciar a chave pública enviada da chave pública recebida
+
 interface HomePageProps {
-    user: User;
+    user?: User;
+    setFirstLogin: React.Dispatch<React.SetStateAction<boolean>>;
+    firstLogin: boolean;
 };
 
-const HomePage = () => {
+const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
     const [currentFriend, setCurrentFriend] = useState<User>();
     const [privKey, setPrivKey] = useState<Uint8Array>(new Uint8Array());
-    const [pubKey, setPubKey] = useState<Uint8Array>(new Uint8Array());
+    const [receivedPK, setReceivedPK] = useState<Uint8Array>(new Uint8Array());
+    const [sentPK, setSentPK] = useState<string>();
     const [user, setUser] = useState<User>();
     const [username, setUsername] = useState('');
 
@@ -23,7 +29,13 @@ const HomePage = () => {
         const setKeys = () => {
             const privateKey = KeyService.genPrivateKey();
             setPrivKey(privateKey);
-            setPubKey(KeyService.genPublicKey(privateKey));
+
+            //Esse trecho será modificado para criptografar as mensagens enviadas com a chave pública recebida do amigo
+            setReceivedPK(KeyService.genPublicKey(privateKey));
+            if(firstLogin) { 
+                setSentPK(KeyService.getPubKey());
+                setFirstLogin(false);
+            };
             setUsername(localStorage.getItem('username') || '');
         };
         setKeys();
@@ -52,7 +64,7 @@ const HomePage = () => {
                     }
                 </div>
                 <div>
-                    <Chat user={user} friend={currentFriend} privKey={privKey} pubKey={pubKey} />
+                    <Chat user={user} friend={currentFriend} privKey={privKey} receivedPK={receivedPK} sentPK={sentPK} />
                 </div>
             </div>
         </div>

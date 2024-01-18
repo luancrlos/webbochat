@@ -2,9 +2,8 @@ import styles from './FriendList.module.css';
 import { User } from "../../services/User.service";
 import { ActionProps } from '../../services/User.service';
 import { useEffect, useState } from 'react';
-import Status from '../Status/Status';
-import { KeyService } from '../../services/Key.service';
 import { RabbitMQService } from '../../services/RabbitMQ.service';
+import Status from '../Status/Status';
 
 interface FriendListProps extends ActionProps {
     username: string;
@@ -22,25 +21,11 @@ const FriendList = ({ friends, onItemClick, username }: FriendListProps) => {
         setOnlineCount(count);
     }, [friends]);
 
-    const generateKey = () => {
-        const privKey = KeyService.genPrivateKey();
-        const pubKey = KeyService.genPublicKey(privKey);
-        const key = KeyService.keyToString(pubKey);
-        return key;
+    const onClickChat = (friend: User) => {
+        onItemClick(friend);
     };
 
-    const onClickChat = (friend: User) => {
-        onItemClick(friend); 
-        const publicKey = generateKey();
-        const obj = {
-            sender: username,
-            receiver: friend.username,
-            publickey: publicKey, 
-        }
-        const data = JSON.stringify(obj);
-        console.log(data);
-        RabbitMQService.publish('message/publickey', data);
-    };
+
 
     return (
         <div className={styles.container}>
