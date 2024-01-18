@@ -13,26 +13,26 @@ export interface User {
     username: string;
     password: string;
     messages?: Message[];
-    key?: boolean;
+    key?: Uint8Array;
     isClicked?: boolean;
 }
 
 export const users: User[] = [
     {
         name: 'Amanda Serique Pinheiro',
-        status: false,
+        status: true,
         username: 'amanda',
         password: 'Admin1234'
     },
     {
         name: 'Roberto Alves Neto',
-        status: false,
+        status: true,
         username: 'roberto',
         password: 'Admin1234'
     },
     {
         name: 'Luan',
-        status: false,
+        status: true,
         username: 'luan',
         password: 'Admin1234'
     }

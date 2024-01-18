@@ -1,115 +1,53 @@
 import styles from './Chat.module.css';
 import { User } from "../../services/User.service";
 import Status from '../Status/Status';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Message, MessageService } from '../../services/Message.service';
-import { RabbitMQService } from '../../services/RabbitMQ.service';
 import ICheckmark from '../SVG/Checkmark';
-import * as CryptoJS from 'crypto-js';
 
 interface ChatProps {
     friend?: User;
     user?: User;
     privKey: Uint8Array;
-    receivedPK: Uint8Array;
-    sentPK: string | undefined;
+    publicKey: Uint8Array;
+    forceUpdate: boolean;
+    setForceUpdate: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export type MsgContent = {
-    pattern: string,
-    data: {
-        sender?: string,
-        receiver: string,
-        date?: string,
-        message?: any,
-    }
-};
-
-const Chat = ({ user, friend, privKey, receivedPK, sentPK }: ChatProps) => {
+const Chat = ({ user, friend, privKey, publicKey, forceUpdate, setForceUpdate }: ChatProps) => {
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMsg, setNewMsg] = useState<string>('');
-    const [pendingMsg, setPendingMsg] = useState('');
+
+    const messagesRef = useRef<null | HTMLDivElement>(null);
+
+    const loadMessages = () => {
+        if (!friend  || !friend.key || !user) return;
+        const friendKey = friend.key;
+        setMessages([]);
+        const data = localStorage.getItem(`${user.username}-${friend.username}`);
+        if (!data) return;
+        const obj = JSON.parse(data) as Message[];
+        const handledData = obj.map((value) => {
+            if (value.fromFriend)
+                return {...value, content: MessageService.decodeMessage(value.content, privKey, friendKey), date: new Date(value.date)};
+            return {...value, date: new Date(value.date)};
+        });
+        setMessages(handledData);
+    };
+
+    useEffect(loadMessages, [friend]);
+    useEffect(() => {
+        if (!forceUpdate) return;
+        loadMessages();
+        setForceUpdate(false);
+    }, [forceUpdate]);
 
     const scrollToBottom = () => {
         messagesRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
-    useEffect(() => {
-        if (user) {
-            publishToMessageQueue();
-            RabbitMQService.subscribe(user.username, updateNewMessage);
-        }
-    }, [user]);
-
-    useEffect(() => {
-        if (!friend || !user) return;
-
-        const data = localStorage.getItem(`friend-${user.username}-${friend.username}`);
-        if (!data) setMessages([]);
-        else {
-            const obj = JSON.parse(data) as Message[];
-            const handledData = obj.map((value) => {
-                if (value.fromFriend) {
-                    value.content = MessageService.decodeMessage(value.content, privKey, receivedPK);
-                }
-                return {...value, date: new Date(value.date)}
-            });
-            setMessages(handledData);
-        }
-    }, [friend]);
-
-    useEffect(() => {
-        scrollToBottom();
-        if (!friend || !user) return;
-
-        localStorage.setItem(`friend-${user.username}-${friend.username}`, JSON.stringify(messages));
-    }, [messages]);
-
-    const updateNewMessage = (msg: string) => {
-        setPendingMsg(msg);
-    }
-
-    useEffect(() => {
-        if (pendingMsg != '') {
-            verifyNewMessage(pendingMsg);
-            setPendingMsg('');
-        }
-    }, [pendingMsg])
-
-    const sendPublicKey = () => {
-        const obj = {
-            sender: user?.username,
-            receiver: friend?.username,
-            publickey: sentPK, 
-        }
-        console.log(sentPK);
-        const data = JSON.stringify(obj);
-        RabbitMQService.publish('message/publickey', data);
-        console.log(data);
-
-    };
-
-    const publishToMessageQueue = () => {
-        setInterval(() => {
-            const obj = {
-                receiver: user?.username
-            }
-            RabbitMQService.publish('message/receive', JSON.stringify(obj))
-        }, 2000);
-    };
-    
-    const verifyNewMessage = (msg: any) => {
-        const obj: MsgContent = JSON.parse(msg);
-        if (!obj || !obj.data) return;
-        if (obj.data.sender === friend?.username) {
-            updateMessages(obj.data.message || '', true);
-        };
-    };
-
-    const messagesRef = useRef<null | HTMLDivElement>(null);
-
-    
+    useEffect(scrollToBottom, [messages]);
 
     const handleNewMsg = (e: React.ChangeEvent<HTMLInputElement>) => {
         setNewMsg(e.target.value);
@@ -117,6 +55,25 @@ const Chat = ({ user, friend, privKey, receivedPK, sentPK }: ChatProps) => {
 
     const dateToHour = (date: Date) => {
         return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    };
+
+    const sendMessage = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!newMsg || !friend || !friend.key) return;
+        MessageService.sendMessage(newMsg, privKey, friend.key, user?.username || '', friend?.username || '');
+        const mList: Message[] = [...messages, {
+            content: newMsg,
+            date: new Date(),
+            fromFriend: false,
+            status: '0'
+        }];
+        saveToCache(mList);
+        setMessages(mList);
+        setNewMsg('');
+    };
+    
+    const saveToCache = (mList: Message[]) => {
+        localStorage.setItem(`${user?.username}-${friend?.username}`, JSON.stringify(mList));
     };
 
     const renderMessages = () => {
@@ -149,25 +106,6 @@ const Chat = ({ user, friend, privKey, receivedPK, sentPK }: ChatProps) => {
             </>
         );
     };
-
-    const sendMessage = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        if (!newMsg) return;
-        MessageService.sendMessage(newMsg, privKey, receivedPK, user?.username || '', friend?.username || '')
-        updateMessages(newMsg, false);
-        setNewMsg('');
-        sendPublicKey();
-    };
-
-    const updateMessages = (msg: string, fromFriend: boolean) => {
-        const messageDecrypted = MessageService.decodeMessage(msg, privKey, receivedPK);
-        setMessages([...messages, {
-            content: !fromFriend ? msg : messageDecrypted,
-            date: new Date(),
-            fromFriend,
-            status: '0'
-        }]);
-    }
 
     if (!friend)
         return (

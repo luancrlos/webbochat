@@ -12,6 +12,10 @@ const LoginPage = ({firstLogin, setFirstLogin}: LoginProps) => {
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
 
+  useEffect(() => {
+    localStorage.clear()
+  }, []);
+
   const onChangeUsername = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUsername(e.target.value);
   }

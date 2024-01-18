@@ -28,6 +28,7 @@ export class MessageService {
     static decodeMessage = (cipherText: string, privKey: Uint8Array, friendKey: Uint8Array) => {
         const secret = this.getSecret(privKey, friendKey);
         const object = CryptoJS.AES.decrypt(cipherText, secret).toString(CryptoJS.enc.Utf8);
+        if (!object) return cipherText;
         return JSON.parse(object).message;
     }
 

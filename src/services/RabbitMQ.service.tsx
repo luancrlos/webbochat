@@ -1,7 +1,6 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { RabbitMQ as RMQ, rabbitMessageCallback } from './RabbitMQ'; 
-import { MsgContent } from '../components/Chat/Chat';
 
 export class RabbitMQService {
 	static useTopic = (topic: string | undefined) => {

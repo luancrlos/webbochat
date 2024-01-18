@@ -6,19 +6,18 @@ import { RabbitMQService } from '../../services/RabbitMQ.service';
 import Status from '../Status/Status';
 
 interface FriendListProps extends ActionProps {
-    username: string;
     friends: User[];
     onItemClick: (friend: User) => void;
 };
 
-const FriendList = ({ friends, onItemClick, username }: FriendListProps) => {
+const FriendList = ({ friends, onItemClick }: FriendListProps) => {
     const [onlineCount, setOnlineCount] = useState<number>(0);
 
     useEffect(() => {
         let count = 0;
         for (let i=0; i<friends.length; i++)
             if (friends[i].status) count++;
-        setOnlineCount(count);
+        setOnlineCount(Math.max(0, count-1));
     }, [friends]);
 
     const onClickChat = (friend: User) => {
@@ -32,6 +31,7 @@ const FriendList = ({ friends, onItemClick, username }: FriendListProps) => {
             <h5 className={styles.title}>Friends Online: {onlineCount}</h5>
             <div className={styles.list}>
                 {(friends.map((friend, index) => {
+                    if (!friend.key) return;
                     return (
                         <div 
                             className={styles.item} 
