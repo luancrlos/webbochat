@@ -2,7 +2,6 @@ import styles from './FriendList.module.css';
 import { User } from "../../services/User.service";
 import { ActionProps } from '../../services/User.service';
 import { useEffect, useState } from 'react';
-import { RabbitMQService } from '../../services/RabbitMQ.service';
 import Status from '../Status/Status';
 
 interface FriendListProps extends ActionProps {
@@ -23,8 +22,6 @@ const FriendList = ({ friends, onItemClick }: FriendListProps) => {
     const onClickChat = (friend: User) => {
         onItemClick(friend);
     };
-
-
 
     return (
         <div className={styles.container}>

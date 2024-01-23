@@ -1,5 +1,6 @@
 import { Message } from "./Message.service";
 import { API } from "./Constants";
+import { Storage, UserTokenProps } from "./Storage";
 import request from './Request';
 
 export interface ActionProps {
@@ -50,25 +51,35 @@ export abstract class UserService {
 		});
     }
     
-    static login = async (username: string, password: string) => {
-        const response = await request('post', API.URL + '', {
-            data: {
-                email: username,
-				password,
-			},
-		});
-    }
     
     static async getList() {
         return await request('get', API.URL + '/user', {
             //
         });
     }
-
+    
     static async search(username: string) {
-		return await request('get', API.URL + '', {
+        return await request('get', API.URL + '', {
             //
 		});
 	}
+    
+    static login = async (username: string, password: string) => {
+        const response = await request('post', API.URL + '/login', {
+            data: {
+                username: username,
+                password,
+            },
+        });
 
+        const { access_token, user } = response;
+        Storage.setUserSession({ ...user });
+
+        const accessToken: UserTokenProps = {
+            token: access_token.token,
+        };
+
+        Storage.setToken(accessToken);
+        return response;
+    };
 };

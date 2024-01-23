@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { UserService } from '../../services/User.service';
 import styles from './LoginPage.module.css';
-import { users } from '../../services/User.service';
+// import { users } from '../../services/User.service';
 
 export interface LoginProps {
   firstLogin: boolean;
@@ -15,6 +16,16 @@ const LoginPage = ({firstLogin, setFirstLogin}: LoginProps) => {
   useEffect(() => {
     localStorage.clear()
   }, []);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		try {
+			await UserService.login(username, password);
+			window.location.reload();
+		} catch (error) {
+        console.log('erro');
+		}
+	};
 
   const onChangeUsername = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUsername(e.target.value);
@@ -48,19 +59,19 @@ const LoginPage = ({firstLogin, setFirstLogin}: LoginProps) => {
     );
   };
 
-  const signIn = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    for (let i=0; i<users.length; i++) {
-      if (username === users[i].username && password === users[i].password) {
-        localStorage.setItem('username', username);
-        document.location.href = "/home";
-        if(firstLogin) setFirstLogin(true);
-      }
-    }
-  }
+  // const signIn = (e: React.FormEvent<HTMLFormElement>) => {
+  //   e.preventDefault();
+  //   for (let i=0; i<users.length; i++) {
+  //     if (username === users[i].username && password === users[i].password) {
+  //       localStorage.setItem('username', username);
+  //       document.location.href = "/home";
+  //       if(firstLogin) setFirstLogin(true);
+  //     }
+  //   }
+  // }
 
   return (
-    <form className={styles.page} onSubmit={(e) => signIn(e)}>
+    <form className={styles.page} onSubmit={(e) => handleSubmit(e)}>
       <div className={styles.header}>
         {renderHeader()}
       </div>
