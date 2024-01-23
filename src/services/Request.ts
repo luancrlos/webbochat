@@ -2,7 +2,6 @@ import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { API } from './Constants';
 import interceptors from './Interceptor';
 import { Storage } from './Storage';
-
 export type HttpMethods = 'get' | 'post' | 'delete' | 'put' | 'patch';
 
 export interface RequestConfig extends AxiosRequestConfig {
@@ -14,7 +13,6 @@ export interface RequestConfig extends AxiosRequestConfig {
 export abstract class Request {
 	static authInstance() {
 		const token = Storage.getToken();
-		
 		return axios.create({
 			baseURL: API.URL,
 			headers: {

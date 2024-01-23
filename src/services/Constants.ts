@@ -1,7 +1,7 @@
 export const API_DEFAULT = {
-	PORT: '',
+	PORT: '3000',
 	PROTOCOL: 'http',
-	IP: 'localhost',
+	IP: '10.10.10.131',
 };
 
 export const AMQ_API = {

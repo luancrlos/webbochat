@@ -24,22 +24,22 @@ export const users: User[] = [
         name: 'Amanda Serique Pinheiro',
         status: true,
         username: 'amanda',
-        password: 'Admin1234',
-        id: '1',
+        password: 'senhaamanda',
+        id: 'b50b892f-5740-4c25-94b3-c41823716597',
     },
     {
         name: 'Roberto Alves Neto',
         status: true,
         username: 'roberto',
-        password: 'Admin1234',
-        id: '2',
+        password: 'senharoberto',
+        id: 'f11925f0-ebb8-43d8-af1c-3824befe49b5',
     },
     {
         name: 'Luan',
         status: true,
         username: 'luan',
-        password: 'Admin1234',
-        id: '3',
+        password: 'senhaluan',
+        id: '6a8e8adb-81cc-48ac-a722-c6cf4d558517',
     }
 ];
 
@@ -69,7 +69,8 @@ export abstract class UserService {
 	}
     
     static login = async (id: string, password: string) => {
-        const response = await request('post', API.URL + '/login', {
+        console.log(process.env.NODE_TLS_REJECT_UNAUTHORIZED);
+        const response = await request('post', API.URL + '/auth/login', {
             data: {
                 id,
                 password,

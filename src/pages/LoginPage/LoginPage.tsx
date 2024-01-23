@@ -34,6 +34,9 @@ const LoginPage = ({firstLogin, setFirstLogin}: LoginProps) => {
       localStorage.setItem('username', username);
       document.location.href = "/home";
 		} catch (error) {
+        console.log(error);
+        console.log(id);
+        console.log(password);
         console.log('erro');
 		}
 	};
