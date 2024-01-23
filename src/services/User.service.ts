@@ -12,6 +12,7 @@ export interface User {
     name: string;
     status: boolean;
     username: string;
+    id: string;
     password: string;
     messages?: Message[];
     key?: Uint8Array;
@@ -23,19 +24,22 @@ export const users: User[] = [
         name: 'Amanda Serique Pinheiro',
         status: true,
         username: 'amanda',
-        password: 'Admin1234'
+        password: 'Admin1234',
+        id: '1',
     },
     {
         name: 'Roberto Alves Neto',
         status: true,
         username: 'roberto',
-        password: 'Admin1234'
+        password: 'Admin1234',
+        id: '2',
     },
     {
         name: 'Luan',
         status: true,
         username: 'luan',
-        password: 'Admin1234'
+        password: 'Admin1234',
+        id: '3',
     }
 ];
 
@@ -64,10 +68,10 @@ export abstract class UserService {
 		});
 	}
     
-    static login = async (username: string, password: string) => {
+    static login = async (id: string, password: string) => {
         const response = await request('post', API.URL + '/login', {
             data: {
-                username: username,
+                id,
                 password,
             },
         });
@@ -82,4 +86,9 @@ export abstract class UserService {
         Storage.setToken(accessToken);
         return response;
     };
+
+    static logout = () => {
+		Storage.logout();
+		document.location.href = "/";
+	};
 };

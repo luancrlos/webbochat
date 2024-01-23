@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { UserService } from '../../services/User.service';
 import styles from './LoginPage.module.css';
-// import { users } from '../../services/User.service';
+import { users } from '../../services/User.service';
 
 export interface LoginProps {
   firstLogin: boolean;
@@ -17,11 +17,22 @@ const LoginPage = ({firstLogin, setFirstLogin}: LoginProps) => {
     localStorage.clear()
   }, []);
 
+  const getId = () => {
+    for (let i = 0; i < users.length; i++) {
+      if (username === users[i].username) {
+        return users[i].id;  
+      }
+    }
+    return '';
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+    const id = getId();
 		try {
-			await UserService.login(username, password);
-			window.location.reload();
+      await UserService.login(id, password);
+      localStorage.setItem('username', username);
+      document.location.href = "/home";
 		} catch (error) {
         console.log('erro');
 		}

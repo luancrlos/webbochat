@@ -30,7 +30,7 @@ export abstract class Storage {
 	static logout = () => {
 		this.removeToken();
 		this.removeUserSession();
-		window.location.reload();
+		document.location.href = "/";
 	};
 
 	static getUserSession = (): User | undefined => {
