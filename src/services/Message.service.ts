@@ -12,7 +12,7 @@ export interface Message {
 
 export class MessageService {
 
-    static sendMessage = (message: string, privKey: Uint8Array, friendKey: Uint8Array, id: string, friendId: string) => {
+    static sendMessage = (message: string, privKey: Uint8Array, friendKey: Uint8Array, id: string, friendId: string, group: boolean = false) => {
         const secretDecoded = this.getSecret(privKey, friendKey);
         const cipherParams = CryptoJS.AES.encrypt(JSON.stringify({message}), secretDecoded);
         const obj = {
@@ -20,6 +20,7 @@ export class MessageService {
             receiver: friendId,
             date: new Date(),
             message: cipherParams.toString(),
+            chatName: group
         }
         const data = JSON.stringify(obj);
         RabbitMQService.publish('message/send', data);

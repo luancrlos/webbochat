@@ -22,31 +22,24 @@ export interface User {
 export const users: User[] = [
     {
         name: 'Amanda Serique Pinheiro',
-        status: true,
+        status: false,
         username: 'amanda',
         password: 'senhaamanda',
-        id: '66583441-8b6a-4c97-8a69-09f625804c69',
-    },
-    {
-        name: 'eNDY',
-        status: true,
-        username: 'endy',
-        password: '1234',
-        id: "bd477d1c-f02e-4766-aae1-cd09dd07e3ae"
+        id: 'a8fb5490-b7c9-444b-b207-248c75db3685',
     },
     {
         name: 'Roberto Alves Neto',
-        status: true,
+        status: false,
         username: 'roberto',
         password: '1234',
-        id: 'fc801bb8-ad15-4487-abe5-dd37996b0dd7',
+        id: '3f54aa36-d6ed-4403-a553-f07391f67f05',
     },
     {
         name: 'Luan',
-        status: true,
+        status: false,
         username: 'luan',
         password: 'senhaluan',
-        id: '46158cb6-45de-471e-ad10-7fc2c497dce7',
+        id: '6f6ed460-bd5b-41a0-ac51-e5ef8012379c',
     }
 ];
 

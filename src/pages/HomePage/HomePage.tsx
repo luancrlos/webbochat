@@ -7,6 +7,7 @@ import Chat from '../../components/Chat/Chat';
 import { KeyService } from '../../services/Key.service';
 import { RabbitMQService } from '../../services/RabbitMQ.service';
 import { Message } from '../../services/Message.service';
+import GroupChat, { GroupMessage } from '../../components/GroupChat/GroupChat';
 
 
 export type UUID = `${string}-${string}-${string}-${string}-${string}`;
@@ -22,6 +23,7 @@ type MsgContent = {
         date?: string,
         message?: any,
         publickey?: Uint8Array
+        chatName?: boolean;
     }
 };
 
@@ -33,6 +35,7 @@ interface HomePageProps {
 
 const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
     const [currentFriend, setCurrentFriend] = useState<User>();
+    const [group, setGroup] = useState(false);
     const [privKey, setPrivKey] = useState<Uint8Array>(new Uint8Array());
     const [publicKey, setPublicKey] = useState<Uint8Array>(new Uint8Array());
     const [user, setUser] = useState<User>();
@@ -159,18 +162,44 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
         setForceUpdate(true);
     }
 
+    const handleGroupMessages = (object: MsgContent) => {
+        const dataStored = localStorage.getItem('group');
+        const messages = !dataStored ? [] : JSON.parse(dataStored) as GroupMessage[];
+
+        messages.push({
+            content: object.data.message,
+            date: new Date(object.data.date || new Date()),
+            fromFriend: true,
+            status: '0',
+            friendUsername: object.data.sender
+        });
+        localStorage.setItem('group', JSON.stringify(messages));
+        setForceUpdate(true);
+    }
+
     const handleNewMessageFromQueue = () => {
         if (pendingMsg === '') return;
 
         const dataParsed: MsgContent = JSON.parse(pendingMsg);
         if (!dataParsed || !dataParsed.data) return;
         if (dataParsed.data.publickey) handleFriendsKeys(dataParsed);
+        else if (dataParsed.data.chatName) handleGroupMessages(dataParsed);
         else handleFriendsMessages(dataParsed);
         
         setPendingMsg('');        
     };
 
     useEffect(handleNewMessageFromQueue, [pendingMsg]);
+
+    const handleFriendListClick = (friend: User) => {
+        setGroup(false);
+        setCurrentFriend(friend);
+    }
+
+    const handleGroupClick = () => {
+        setGroup(true);
+        setCurrentFriend(undefined);
+    }
 
     return (
         <div className={styles.page}>
@@ -180,11 +209,15 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
             <div className={styles.content}>
                 <div>
                     {users &&  
-                        <FriendList friends={friendsList} onItemClick={setCurrentFriend} />                    
+                        <FriendList friends={friendsList} onItemClick={handleFriendListClick} onGroupClick={handleGroupClick} />                    
                     }
                 </div>
                 <div>
-                    <Chat user={user} friend={currentFriend} privKey={privKey} publicKey={publicKey} forceUpdate={forceUpdate} setForceUpdate={setForceUpdate} />
+                    {group ? (
+                        <GroupChat user={user} friends={friendsList} privKey={privKey} publicKey={publicKey} forceUpdate={forceUpdate} setForceUpdate={setForceUpdate} />
+                    ) : (
+                        <Chat user={user} friend={currentFriend} privKey={privKey} publicKey={publicKey} forceUpdate={forceUpdate} setForceUpdate={setForceUpdate} />
+                    )}
                 </div>
             </div>
         </div>
