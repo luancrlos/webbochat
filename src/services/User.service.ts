@@ -25,21 +25,28 @@ export const users: User[] = [
         status: true,
         username: 'amanda',
         password: 'senhaamanda',
-        id: 'b50b892f-5740-4c25-94b3-c41823716597',
+        id: '66583441-8b6a-4c97-8a69-09f625804c69',
+    },
+    {
+        name: 'eNDY',
+        status: true,
+        username: 'endy',
+        password: '1234',
+        id: "bd477d1c-f02e-4766-aae1-cd09dd07e3ae"
     },
     {
         name: 'Roberto Alves Neto',
         status: true,
         username: 'roberto',
-        password: 'senharoberto',
-        id: 'f11925f0-ebb8-43d8-af1c-3824befe49b5',
+        password: '1234',
+        id: 'fc801bb8-ad15-4487-abe5-dd37996b0dd7',
     },
     {
         name: 'Luan',
         status: true,
         username: 'luan',
         password: 'senhaluan',
-        id: '6a8e8adb-81cc-48ac-a722-c6cf4d558517',
+        id: '46158cb6-45de-471e-ad10-7fc2c497dce7',
     }
 ];
 

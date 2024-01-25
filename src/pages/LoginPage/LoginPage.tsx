@@ -35,9 +35,6 @@ const LoginPage = ({firstLogin, setFirstLogin}: LoginProps) => {
       document.location.href = "/home";
 		} catch (error) {
         console.log(error);
-        console.log(id);
-        console.log(password);
-        console.log('erro');
 		}
 	};
 
