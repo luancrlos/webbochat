@@ -41,5 +41,10 @@ img {
   row-gap: 4px;
 }
 
+.buttonContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
 
 

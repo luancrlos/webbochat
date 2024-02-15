@@ -6,6 +6,7 @@ import './index.css';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoginPage from './pages/LoginPage/LoginPage';
 import HomePage from './pages/HomePage/HomePage';
+import RegistrationPage from './pages/RegistrationPage/RegistrationPage';
 
 export default function App() {
   const [firstLogin, setFirstLogin] = useState<boolean>(true);
@@ -14,6 +15,7 @@ export default function App() {
     <BrowserRouter>
       <div className='page'>
         <Routes>
+          <Route path="registration" element={<RegistrationPage/>} />
           <Route path="/" element={<LoginPage firstLogin={firstLogin} setFirstLogin={setFirstLogin}/>} />
           <Route path="home" element={<HomePage firstLogin={firstLogin} setFirstLogin={setFirstLogin}/>} />
         </Routes>

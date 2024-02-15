@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { UserService } from '../../services/User.service';
 import styles from './LoginPage.module.css';
 import { users } from '../../services/User.service';
+import RegistrationPage from '../RegistrationPage/RegistrationPage';
 
 export interface LoginProps {
   firstLogin: boolean;
@@ -46,6 +47,10 @@ const LoginPage = ({firstLogin, setFirstLogin}: LoginProps) => {
     setPassword(e.target.value);
   }
 
+  const createAccount = () => {
+		document.location.href = "/registration";
+  }
+
   const renderHeader = () => {
     return (
       <>
@@ -70,16 +75,14 @@ const LoginPage = ({firstLogin, setFirstLogin}: LoginProps) => {
     );
   };
 
-  // const signIn = (e: React.FormEvent<HTMLFormElement>) => {
-  //   e.preventDefault();
-  //   for (let i=0; i<users.length; i++) {
-  //     if (username === users[i].username && password === users[i].password) {
-  //       localStorage.setItem('username', username);
-  //       document.location.href = "/home";
-  //       if(firstLogin) setFirstLogin(true);
-  //     }
-  //   }
-  // }
+  const renderFooter = () => {
+    return (
+      <div className={styles.content}>
+        <h3>New to Webbochat? Create an account!</h3>
+        <button className={styles.button} onClick={createAccount}>Register</button>
+      </div>
+    );
+  }
 
   return (
     <form className={styles.page} onSubmit={(e) => handleSubmit(e)}>
@@ -90,6 +93,9 @@ const LoginPage = ({firstLogin, setFirstLogin}: LoginProps) => {
         {renderContent()}
       </div>
       <button className={styles.button} type='submit'>Sign-in</button>
+      <div>
+        {renderFooter()}
+      </div>
     </form>
   );
 }

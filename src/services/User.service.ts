@@ -50,11 +50,9 @@ export abstract class UserService {
             data: {
                 email: username,
 				password,
-			},
-			
+			},		
 		});
     }
-    
     
     static async getList() {
         return await request('get', API.URL + '/user', {
