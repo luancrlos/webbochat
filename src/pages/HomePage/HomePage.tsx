@@ -8,6 +8,7 @@ import { KeyService } from '../../services/Key.service';
 import { RabbitMQService } from '../../services/RabbitMQ.service';
 import { Message } from '../../services/Message.service';
 import GroupChat, { GroupMessage } from '../../components/GroupChat/GroupChat';
+import { Storage, UserInfo } from '../../services/Storage';
 
 
 export type UUID = `${string}-${string}-${string}-${string}-${string}`;
@@ -23,7 +24,7 @@ type MsgContent = {
         date?: string,
         message?: any,
         publickey?: Uint8Array
-        chatName?: boolean;
+        chatName?: string;
     }
 };
 
@@ -45,39 +46,38 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
 
     useEffect(() => {
         const getUser = () => {
-            const username = localStorage.getItem('username');
-            if (!username) return;
-            for (let i=0; i<users.length; i++) {
-                if (username === users[i].username) setUser(users[i]);
-            };
+            const user = Storage.getUserSession();
+            if (!user) return;
+            setUser(user);  
+            getKeys(user.name);
         };
 
-        const setKeys = () => {
-            const storedPrivKey = localStorage.getItem('priv-key');
-            const storedPubKey = localStorage.getItem('pub-key');
-            if (!storedPrivKey || !storedPubKey) {
-                const privateKey = KeyService.genPrivateKey();
-                setPrivKey(privateKey);
-
-                const pubKey = KeyService.genPublicKey(privateKey);
-                setPublicKey(pubKey);
-
-                localStorage.setItem('priv-key', JSON.stringify(Array.from(privateKey)));
-                localStorage.setItem('pub-key', JSON.stringify(Array.from(pubKey)));
-            }
+        const getKeys = (username: string) => {
+            const infoString = localStorage.getItem(username);
+            let keys: { privateKey: Uint8Array, publicKey: Uint8Array };
+            if (!infoString) keys =  generateKeys(username);
             else {
-                const privateKey = new Uint8Array(JSON.parse(storedPrivKey));
-                const pubKey = new Uint8Array(JSON.parse(storedPubKey));
-
-                setPrivKey(privateKey);
-                setPublicKey(pubKey);
+                const userInfo: UserInfo = JSON.parse(infoString);
+                const array = JSON.parse(userInfo.privateKey);
+                keys = { privateKey: new Uint8Array(JSON.parse(userInfo.privateKey)), publicKey: new Uint8Array(JSON.parse(userInfo.publicKey)) }
             }
+            setPrivKey(keys.privateKey);
+            setPublicKey(keys.publicKey);
             
             if(firstLogin) setFirstLogin(false);
         };
 
+        const generateKeys = (username: string) => {
+            console.log('PRIMEIRO USO IDENTIFICADO -- GERANDO CHAVES')
+            const privateKey = KeyService.genPrivateKey();
+            const publicKey = KeyService.genPublicKey(privateKey);
+            console.log(`CHAVE PRIVADA: ${privateKey}`);
+            console.log(`CHAVE PUBLICA: ${publicKey}`);
+            localStorage.setItem(username, JSON.stringify({ privateKey: JSON.stringify(Array.from(privateKey)), publicKey: JSON.stringify(Array.from(publicKey)), messages: []}));
+            return { privateKey, publicKey };
+        };
+
         getUser();
-        setKeys();
     }, []);
     
     useEffect(() => {
@@ -85,7 +85,7 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
             if (!user) return;
             let friends: User[] = [];
             for (let i=0; i<users.length; i++) {
-                if (users[i].username !== user.username) friends.push(users[i]); 
+                if (users[i].username !== user.name) friends.push(users[i]); 
             };
             setFriendsList(friends);
         };
@@ -95,7 +95,7 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
     const publishKey = (user: User, friend: User) => {
         const obj = {
             data: {
-                sender: user.username,
+                sender: user.name,
                 receiver: friend.username,
                 publickey: Array.from(publicKey),
             }
@@ -107,11 +107,11 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
     useEffect(() => {
         if (!user) return;
         for (let i=0; i<users.length; i++) {
-            if (users[i].username !== user.username) {
+            if (users[i].username !== user.name) {
                 publishKey(user, users[i]);
             };
         };
-    }, [user])
+    }, [publicKey, privKey])
 
     useEffect(() => {
         localStorage.setItem('friends-list', JSON.stringify(friendsList));
@@ -125,17 +125,18 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
         if (!user) return;
         setInterval(() => {
             const obj = {
-                receiver: user.username
+                receiver: user.name
             }
             RabbitMQService.publish('message/receive', JSON.stringify(obj))
         }, 2000);
         
-        RabbitMQService.subscribe(user.username, newMessageFromQueue);
+        RabbitMQService.subscribe(user.name, newMessageFromQueue);
     };
 
     useEffect(connectToQueue, [user]);
 
     const handleFriendsKeys = (object: MsgContent) => {
+        console.log('RECEBENDO CHAVE DE AMIGO');
         if (!object.data.publickey || !user) return;
         const newFriendsList = [...friendsList];
         for (let i=0; i<newFriendsList.length; i++) {
@@ -183,7 +184,7 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
         const dataParsed: MsgContent = JSON.parse(pendingMsg);
         if (!dataParsed || !dataParsed.data) return;
         if (dataParsed.data.publickey) handleFriendsKeys(dataParsed);
-        else if (dataParsed.data.chatName) handleGroupMessages(dataParsed);
+        else if (dataParsed.data.chatName !== "false") handleGroupMessages(dataParsed);
         else handleFriendsMessages(dataParsed);
         
         setPendingMsg('');        

@@ -25,7 +25,7 @@ const Chat = ({ user, friend, privKey, publicKey, forceUpdate, setForceUpdate }:
         if (!friend  || !friend.key || !user) return;
         const friendKey = friend.key;
         setMessages([]);
-        const data = localStorage.getItem(`${user.username}-${friend.username}`);
+        const data = localStorage.getItem(`${user.name}-${friend.username}`);
         if (!data) return;
         const obj = JSON.parse(data) as Message[];
         const handledData = obj.map((value) => {
@@ -60,7 +60,7 @@ const Chat = ({ user, friend, privKey, publicKey, forceUpdate, setForceUpdate }:
     const sendMessage = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!newMsg || !friend || !friend.key) return;
-        MessageService.sendMessage(newMsg, privKey, friend.key, user?.username || '', friend?.username || '');
+        MessageService.sendMessage(newMsg, privKey, friend.key, user?.name || '', friend?.username || '');
         const mList: Message[] = [...messages, {
             content: newMsg,
             date: new Date(),
@@ -73,7 +73,7 @@ const Chat = ({ user, friend, privKey, publicKey, forceUpdate, setForceUpdate }:
     };
     
     const saveToCache = (mList: Message[]) => {
-        localStorage.setItem(`${user?.username}-${friend?.username}`, JSON.stringify(mList));
+        localStorage.setItem(`${user?.name}-${friend?.username}`, JSON.stringify(mList));
     };
 
     const renderMessages = () => {

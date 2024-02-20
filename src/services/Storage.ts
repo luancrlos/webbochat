@@ -1,7 +1,14 @@
+import { Message } from "./Message.service";
 import { User } from "./User.service";
 
 export interface UserTokenProps {
 	token?: string;
+}
+
+export interface UserInfo {
+	privateKey: string;
+	publicKey: string;
+	messages: Message[];
 }
 
 export type TokenTypes = keyof UserTokenProps;
@@ -46,4 +53,8 @@ export abstract class Storage {
 	static removeUserSession = () => {
 		window.localStorage.removeItem('user');
 	};
+
+	static saveUserInfo = (username: string, userInfo: UserInfo) => {
+		localStorage.setItem(username, JSON.stringify(userInfo));
+	}
 }

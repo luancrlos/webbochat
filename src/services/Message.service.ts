@@ -14,6 +14,7 @@ export class MessageService {
 
     static sendMessage = (message: string, privKey: Uint8Array, friendKey: Uint8Array, id: string, friendId: string, group: boolean = false) => {
         const secretDecoded = this.getSecret(privKey, friendKey);
+        console.log('Shared secret gerado. Enviando mensagem...');
         const cipherParams = CryptoJS.AES.encrypt(JSON.stringify({message}), secretDecoded);
         const obj = {
             sender: id,

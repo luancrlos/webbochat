@@ -1,13 +1,13 @@
 export const API_DEFAULT = {
 	PORT: '3000',
 	PROTOCOL: 'http',
-	IP: '10.10.10.131',
+	IP: '172.30.21.134',
 };
 
 export const AMQ_API = {
 	PROTOCOL: 'ws',
 	PORT: '15675',
-	IP: '10.10.10.131',
+	IP: '172.30.21.134',
 	USER: 'guest',
 	PWD: 'guest',
 	PATH: 'ws',

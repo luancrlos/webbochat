@@ -14,25 +14,10 @@ const LoginPage = ({firstLogin, setFirstLogin}: LoginProps) => {
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
 
-  useEffect(() => {
-    localStorage.clear()
-  }, []);
-
-  const getId = () => {
-    for (let i = 0; i < users.length; i++) {
-      if (username === users[i].username) {
-        return users[i].id;  
-      }
-    }
-    return '';
-  }
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-    const id = getId();
 		try {
-      await UserService.login(id, password);
-      localStorage.setItem('username', username);
+      await UserService.login(username, password);
       document.location.href = "/home";
 		} catch (error) {
         console.log(error);
