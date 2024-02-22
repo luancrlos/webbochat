@@ -1,11 +1,12 @@
 import React, {useState } from 'react';
 import { UserService } from '../../services/User.service';
 import styles from '../LoginPage/LoginPage.module.css';
-import { users } from '../../services/User.service';
 
 const RegistrationPage = () => {
   const [username, setUsername] = useState<string>('');
+  const [userId, setUserId] = useState<string>('');
   const [pwd, setPwd] = useState<string>('');
+  const [registered, setRegistered] = useState<boolean>(false);
 
   const passwordValidation = (password: string) => {
     const checkNumber = /.*\d.*/;
@@ -30,8 +31,10 @@ const RegistrationPage = () => {
     e.preventDefault();
     try {
       if(passwordValidation(pwd)){
-        await UserService.register(username, pwd);
-        document.location.href = "/";
+        const response = await UserService.register(username, pwd);
+        setRegistered(true);
+        setUserId(response);
+        console.log(response);
       }
     } catch (error) {
         console.log(error);
@@ -54,7 +57,12 @@ const RegistrationPage = () => {
   const renderHeader = () => {
     return (
       <>
-        <h1>Register!</h1>
+      {registered ?
+        <h1>Account successfully created! </h1>
+        :
+        <h1>Register!</h1> 
+      }
+
         <img className={styles.logo} src='logo.png' alt='logo' /> 
       </>
     );
@@ -63,6 +71,15 @@ const RegistrationPage = () => {
   const renderContent = () => {
     return (
       <>
+      {registered ?
+        <div className={styles.messageContainer}>
+          <p className={styles.messageContent}>
+            We genereted a unique username for you.
+          </p>
+          <p className={styles.messageContent}>From now on, you should use <b>{userId}</b> to enter Webbochat.</p>
+        </div>
+        :
+        <>
         <div className={styles.inputContent}>
           <label>Username</label>
           <input value={username} onChange={(onChangeUsername)} />
@@ -72,8 +89,35 @@ const RegistrationPage = () => {
           <input value={pwd} onChange={(onChangePassword)} type='password' name='password'/>
         </div>
       </>
+      }
+      </>
     );
   };
+
+  const registerLogin = async() => {
+    setRegistered(false);
+    try {
+      await UserService.login(userId, pwd);
+      document.location.href = "/home";
+		} catch (error) {
+        console.log(error);
+		}
+  }
+
+  const renderFooter = () => {
+    return (
+      <>
+      {registered ? 
+        <button className={styles.button} onClick={registerLogin}>Continue</button> 
+        :
+        <div className={styles.buttonContainer}>
+          <button className={styles.button} onClick={returnLogin}>Return</button>
+          <button className={styles.button} type='submit'>Register</button>
+        </div> 
+      }
+      </> 
+    );
+  }
 
   return (
     <form className={styles.page} onSubmit={(e) => handleSubmit(e)}>
@@ -83,10 +127,7 @@ const RegistrationPage = () => {
       <div className={styles.content}>
         {renderContent()}
       </div>
-      <div className={styles.buttonContainer}>
-        <button className={styles.button} onClick={returnLogin}>Return</button>
-        <button className={styles.button} type='submit'>Register</button>
-      </div>
+      {renderFooter()}
     </form>
   );
 }

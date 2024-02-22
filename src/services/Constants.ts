@@ -6,7 +6,7 @@ export const API_DEFAULT = {
 
 export const AMQ_API = {
 	PROTOCOL: 'ws',
-	PORT: '15675',
+	PORT: '8888',
 	IP: '177.149.127.114',
 	USER: 'guest',
 	PWD: 'guest',

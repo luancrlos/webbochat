@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { UserService } from '../../services/User.service';
 import styles from './LoginPage.module.css';
 import { users } from '../../services/User.service';
-import RegistrationPage from '../RegistrationPage/RegistrationPage';
 
 export interface LoginProps {
   firstLogin: boolean;

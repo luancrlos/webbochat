@@ -45,13 +45,15 @@ export const users: User[] = [
 
 export abstract class UserService {
  
-    static register = async (username: string, password: string) => {
-        const response = await request('post', API.URL + '', {
+    static register = async (name: string, password: string) => {
+        const response = await request('post', API.URL + '/user', {
             data: {
-                email: username,
+                name,
 				password,
-			},		
+			},
 		});
+        return response.name;
+
     }
     
     static async getList() {
