@@ -58,7 +58,6 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
             if (!infoString) keys =  generateKeys(username);
             else {
                 const userInfo: UserInfo = JSON.parse(infoString);
-                const array = JSON.parse(userInfo.privateKey);
                 keys = { privateKey: new Uint8Array(JSON.parse(userInfo.privateKey)), publicKey: new Uint8Array(JSON.parse(userInfo.publicKey)) }
             }
             setPrivKey(keys.privateKey);
@@ -83,16 +82,28 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
     useEffect(() => {
         const getFriends = () => {
             if (!user) return;
-            let friends: User[] = [];
-            for (let i=0; i<users.length; i++) {
-                if (users[i].username !== user.name) friends.push(users[i]); 
+            const friendsList = localStorage.getItem(`${user.username}-friends`);
+            if (!friendsList) {
+                let friends: User[] = [];
+                for (let i=0; i<users.length; i++) {
+                    if (users[i].username !== user.name) friends.push(users[i]); 
+                };
+                setFriendsList(friends);
+            }
+            else {
+                const parsed = JSON.parse(friendsList);
+                for (let i=0; i<parsed.length; i++) {
+                    parsed[i].key = new Uint8Array(JSON.parse(parsed.key));
+                }
+                console.log(parsed);
+                setFriendsList(parsed);
             };
-            setFriendsList(friends);
         };
         getFriends();
     }, [user]);
 
-    const publishKey = (user: User, friend: User) => {
+    const publishKey = (friend: User) => {
+        if (!user) return;
         const obj = {
             data: {
                 sender: user.name,
@@ -106,15 +117,12 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
 
     useEffect(() => {
         if (!user) return;
-        for (let i=0; i<users.length; i++) {
-            if (users[i].username !== user.name) {
-                publishKey(user, users[i]);
-            };
-        };
-    }, [publicKey, privKey])
-
-    useEffect(() => {
-        localStorage.setItem('friends-list', JSON.stringify(friendsList));
+        const savedObjects: any = [...friendsList];
+        for (let i=0; i<savedObjects.length; i++) {
+            if (savedObjects[i].key)
+                savedObjects[i].key = JSON.stringify(Array.from(savedObjects[i].key));
+        }
+        localStorage.setItem(`${user.username}-friends`, JSON.stringify(savedObjects));
     }, [friendsList]);
 
     const newMessageFromQueue = (msg: string) => {
@@ -143,7 +151,7 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
             if (object.data.sender === newFriendsList[i].username) {
                 if (newFriendsList[i].key) return;
                 newFriendsList[i].key = new Uint8Array(Array.from(object.data.publickey));
-                publishKey(user, newFriendsList[i]);
+                publishKey(newFriendsList[i]);
             };
         };
         setFriendsList(newFriendsList);
@@ -210,7 +218,7 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
             <div className={styles.content}>
                 <div>
                     {users &&  
-                        <FriendList friends={friendsList} onItemClick={handleFriendListClick} onGroupClick={handleGroupClick} />                    
+                        <FriendList friends={friendsList} setFriends={setFriendsList} onItemClick={handleFriendListClick} onGroupClick={handleGroupClick} publishKey={publishKey} />                    
                     }
                 </div>
                 <div>

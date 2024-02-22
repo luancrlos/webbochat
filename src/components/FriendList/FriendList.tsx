@@ -6,11 +6,13 @@ import Status from '../Status/Status';
 
 interface FriendListProps extends ActionProps {
     friends: User[];
+    setFriends: React.Dispatch<React.SetStateAction<User[]>>;
     onItemClick: (friend: User) => void;
     onGroupClick: () => void;
+    publishKey: (friend: User) => void;
 };
 
-const FriendList = ({ friends, onItemClick, onGroupClick }: FriendListProps) => {
+const FriendList = ({ friends, setFriends, onItemClick, onGroupClick, publishKey }: FriendListProps) => {
     const [onlineCount, setOnlineCount] = useState<number>(0);
 
     useEffect(() => {
@@ -21,12 +23,55 @@ const FriendList = ({ friends, onItemClick, onGroupClick }: FriendListProps) => 
     }, [friends]);
 
     const onClickChat = (friend: User) => {
-        onItemClick(friend);
+        if (friend.key && friend.status) onItemClick(friend);
     };
 
     const onClickGroup = () => {
         onGroupClick();
     };
+
+    const acceptRequest = (index: number) => {
+        const updatedList = [...friends];
+        updatedList[index].status = true;
+        setFriends(updatedList);
+    }
+
+    const sendRequest = (index: number) => {
+        publishKey(friends[index]);
+        acceptRequest(index);
+    }
+
+    const renderFriends = () => {
+        return (
+            <>
+                {(friends.map((friend, index) => {
+                    return (
+                        <div 
+                            className={styles.item} 
+                            onClick={() => onClickChat(friend)} 
+                            key={index}
+                        >
+                            <img src='user.png' alt='user' />
+                            <div className={styles.itemInfo}>
+                                <div className={styles.itemTitle}>
+                                    <p>{friend.name}</p>
+                                    {!friend.status && friend.key && (
+                                        <button type='button' onClick={() => acceptRequest(index)}>Accept Request</button>
+                                    )}
+                                    {friend.status && !friend.key && (
+                                        <span>Pending request...</span>
+                                    )}
+                                    {!friend.status && !friend.key && (
+                                        <button type='button' onClick={() => sendRequest(index)}>Send Request</button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }))}
+            </>
+        )
+    }
 
     return (
         <div className={styles.container}>
@@ -44,23 +89,7 @@ const FriendList = ({ friends, onItemClick, onGroupClick }: FriendListProps) => 
             </div>
             <h5 className={styles.title}>Friends Online: {onlineCount}</h5>
             <div className={styles.list}>
-                {(friends.map((friend, index) => {
-                    return (
-                        <div 
-                            className={styles.item} 
-                            onClick={() => onClickChat(friend)} 
-                            key={index}
-                        >
-                            <img src='user.png' alt='user' />
-                            <div className={styles.itemInfo}>
-                                <div className={styles.itemTitle}>
-                                    <p>{friend.name}</p>
-                                    <Status status={friend.key ? true : false}/>
-                                </div>
-                            </div>
-                        </div>
-                    )
-                }))}
+                {renderFriends()}
             </div>
         
         </div>
