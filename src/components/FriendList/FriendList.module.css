@@ -27,10 +27,6 @@
     cursor: pointer;
 }
 
-.item:hover {
-    background-color: lightgray;
-}
-
 .item img {
     height: 35px;
     width: auto;
@@ -50,4 +46,9 @@
 
 .itemTitle p {
     margin: 0;
+}
+
+.pending {
+    font-size: small;
+    color: gray;
 }

@@ -35,7 +35,8 @@ export class MessageService {
     }
 
     private static getSecret = (privKey: Uint8Array, friendKey: Uint8Array) => {
-        const sharedSecret = secp.getSharedSecret(privKey, friendKey);
+        const fKey = friendKey.toString();
+        const sharedSecret = secp.getSharedSecret(privKey, new Uint8Array(JSON.parse(fKey)));
         return new TextDecoder().decode(sharedSecret);
     }
 }

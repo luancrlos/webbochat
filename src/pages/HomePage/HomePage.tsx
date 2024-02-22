@@ -82,22 +82,25 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
     useEffect(() => {
         const getFriends = () => {
             if (!user) return;
-            const friendsList = localStorage.getItem(`${user.username}-friends`);
-            if (!friendsList) {
-                let friends: User[] = [];
+                const list: User[] = [];
                 for (let i=0; i<users.length; i++) {
-                    if (users[i].username !== user.name) friends.push(users[i]); 
-                };
-                setFriendsList(friends);
-            }
-            else {
-                const parsed = JSON.parse(friendsList);
-                for (let i=0; i<parsed.length; i++) {
-                    parsed[i].key = new Uint8Array(JSON.parse(parsed.key));
+                    if (users[i].username !== user.name) {
+                        const friendLocalInfo = localStorage.getItem(`${user.name}-${users[i].username}`);
+                        if (!friendLocalInfo) {
+                            list.push(users[i]);
+                        }
+                        else {
+                            const infoParsed = JSON.parse(friendLocalInfo);
+                            if (infoParsed.key) {
+                                list.push({...infoParsed, key: JSON.parse(infoParsed.key)});
+                            }
+                            else {
+                                list.push({...infoParsed});
+                            }
+                        }
+                    }
                 }
-                console.log(parsed);
-                setFriendsList(parsed);
-            };
+                setFriendsList(list);
         };
         getFriends();
     }, [user]);
@@ -117,12 +120,13 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
 
     useEffect(() => {
         if (!user) return;
-        const savedObjects: any = [...friendsList];
-        for (let i=0; i<savedObjects.length; i++) {
-            if (savedObjects[i].key)
-                savedObjects[i].key = JSON.stringify(Array.from(savedObjects[i].key));
+        for (let i=0; i<friendsList.length; i++) {
+            const friend: any = friendsList[i];
+            if (friend.key) {
+                friend.key = JSON.stringify(Array.from(friend.key));
+            }
+            localStorage.setItem(`${user.name}-${friend.username}`, JSON.stringify(friend));
         }
-        localStorage.setItem(`${user.username}-friends`, JSON.stringify(savedObjects));
     }, [friendsList]);
 
     const newMessageFromQueue = (msg: string) => {
@@ -144,8 +148,8 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
     useEffect(connectToQueue, [user]);
 
     const handleFriendsKeys = (object: MsgContent) => {
-        console.log('RECEBENDO CHAVE DE AMIGO');
         if (!object.data.publickey || !user) return;
+        console.log('RECEBENDO CHAVE DE AMIGO');
         const newFriendsList = [...friendsList];
         for (let i=0; i<newFriendsList.length; i++) {
             if (object.data.sender === newFriendsList[i].username) {
@@ -158,7 +162,7 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
     };
 
     const handleFriendsMessages = (object: MsgContent) => {
-        const dataStored = localStorage.getItem(`${object.data.receiver}-${object.data.sender}`);
+        const dataStored = localStorage.getItem(`${object.data.receiver}-${object.data.sender}-msgs`);
         const messages = !dataStored ? [] : JSON.parse(dataStored) as Message[];
 
         messages.push({
@@ -167,7 +171,7 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
             fromFriend: true,
             status: '0'
         });
-        localStorage.setItem(`${object.data.receiver}-${object.data.sender}`, JSON.stringify(messages));
+        localStorage.setItem(`${object.data.receiver}-${object.data.sender}-msgs`, JSON.stringify(messages));
         setForceUpdate(true);
     }
 

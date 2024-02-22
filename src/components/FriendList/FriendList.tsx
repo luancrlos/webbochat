@@ -13,14 +13,6 @@ interface FriendListProps extends ActionProps {
 };
 
 const FriendList = ({ friends, setFriends, onItemClick, onGroupClick, publishKey }: FriendListProps) => {
-    const [onlineCount, setOnlineCount] = useState<number>(0);
-
-    useEffect(() => {
-        let count = 0;
-        for (let i=0; i<friends.length; i++)
-            if (friends[i].status) count++;
-        setOnlineCount(Math.max(0, count-1));
-    }, [friends]);
 
     const onClickChat = (friend: User) => {
         if (friend.key && friend.status) onItemClick(friend);
@@ -31,7 +23,12 @@ const FriendList = ({ friends, setFriends, onItemClick, onGroupClick, publishKey
     };
 
     const acceptRequest = (index: number) => {
-        const updatedList = [...friends];
+        const updatedList = friends.map((friend) => {
+            if (!friend.key) return friend;
+            const key = friend.key.toString();
+            friend.key = new Uint8Array(JSON.parse(key));
+            return friend;
+        });
         updatedList[index].status = true;
         setFriends(updatedList);
     }
@@ -39,6 +36,13 @@ const FriendList = ({ friends, setFriends, onItemClick, onGroupClick, publishKey
     const sendRequest = (index: number) => {
         publishKey(friends[index]);
         acceptRequest(index);
+    }
+
+    const checkAllFriendsAdded = () => {
+        for (let i=0; i<friends.length; i++) {
+            if (!friends[i].key || !friends[i].status) return false;
+        }
+        return true;
     }
 
     const renderFriends = () => {
@@ -50,6 +54,10 @@ const FriendList = ({ friends, setFriends, onItemClick, onGroupClick, publishKey
                             className={styles.item} 
                             onClick={() => onClickChat(friend)} 
                             key={index}
+                            style={{ 
+                                    cursor: friend.key && friend.status ? 'pointer' : 'auto', 
+                                    backgroundColor: friend.key && friend.status ? 'white' : 'lightgray'
+                                }}
                         >
                             <img src='user.png' alt='user' />
                             <div className={styles.itemInfo}>
@@ -59,7 +67,7 @@ const FriendList = ({ friends, setFriends, onItemClick, onGroupClick, publishKey
                                         <button type='button' onClick={() => acceptRequest(index)}>Accept Request</button>
                                     )}
                                     {friend.status && !friend.key && (
-                                        <span>Pending request...</span>
+                                        <span className={styles.pending}>Pending request...</span>
                                     )}
                                     {!friend.status && !friend.key && (
                                         <button type='button' onClick={() => sendRequest(index)}>Send Request</button>
@@ -76,18 +84,20 @@ const FriendList = ({ friends, setFriends, onItemClick, onGroupClick, publishKey
     return (
         <div className={styles.container}>
             <h5 className={styles.title}>Groups: </h5>
-            <div 
-                className={styles.item} 
-                onClick={() => onClickGroup()} 
-            >
-                <img src='user.png' alt='user' />
-                <div className={styles.itemInfo}>
-                    <div className={styles.itemTitle}>
-                        <p>devs</p>
+            {checkAllFriendsAdded() && (
+                <div 
+                    className={styles.item} 
+                    onClick={() => onClickGroup()} 
+                >
+                    <img src='user.png' alt='user' />
+                    <div className={styles.itemInfo}>
+                        <div className={styles.itemTitle}>
+                            <p>devs</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <h5 className={styles.title}>Friends Online: {onlineCount}</h5>
+            )}
+            <h5 className={styles.title}>Users</h5>
             <div className={styles.list}>
                 {renderFriends()}
             </div>
