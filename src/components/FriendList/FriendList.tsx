@@ -1,5 +1,5 @@
 import styles from './FriendList.module.css';
-import { User } from "../../services/User.service";
+import { User, UserService } from "../../services/User.service";
 import { ActionProps } from '../../services/User.service';
 import { useEffect, useState } from 'react';
 import Status from '../Status/Status';
@@ -14,6 +14,8 @@ interface FriendListProps extends ActionProps {
 
 const FriendList = ({ friends, setFriends, onItemClick, onGroupClick, publishKey }: FriendListProps) => {
 
+    const [search, setSearch] = useState('');
+
     const onClickChat = (friend: User) => {
         if (friend.key && friend.status) onItemClick(friend);
     };
@@ -22,20 +24,11 @@ const FriendList = ({ friends, setFriends, onItemClick, onGroupClick, publishKey
         onGroupClick();
     };
 
-    const acceptRequest = (index: number) => {
-        const updatedList = friends.map((friend) => {
-            if (!friend.key) return friend;
-            const key = friend.key.toString();
-            friend.key = new Uint8Array(JSON.parse(key));
-            return friend;
-        });
+    const sendAndAcceptRequests = (index: number) => {
+        publishKey(friends[index]);
+        const updatedList = friends.map((friend) => friend);
         updatedList[index].status = true;
         setFriends(updatedList);
-    }
-
-    const sendRequest = (index: number) => {
-        publishKey(friends[index]);
-        acceptRequest(index);
     }
 
     const checkAllFriendsAdded = () => {
@@ -43,6 +36,33 @@ const FriendList = ({ friends, setFriends, onItemClick, onGroupClick, publishKey
             if (!friends[i].key || !friends[i].status) return false;
         }
         return true;
+    }
+
+    const onChangeSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearch(e.target.value);
+    }
+    const addFriend = async () => {
+        try {
+            const response = await UserService.search(search.replace('#', '%23'));
+            if (!response) throw Error();
+            const updatedList = friends.map((friend) => friend);
+
+            const name = response.name.split('#')[0];
+            const id = response.name.split('#')[1];
+
+            const newFriend: User = {
+                name: name[0].toUpperCase() + name.slice(1),
+                status: true,
+                username: name,
+                password: 'XXXX',
+                id,
+            };
+            updatedList.push(newFriend);
+            setFriends(updatedList);
+            publishKey(newFriend)
+;        } catch (error) {
+            alert('No user found!')
+        }
     }
 
     const renderFriends = () => {
@@ -64,13 +84,13 @@ const FriendList = ({ friends, setFriends, onItemClick, onGroupClick, publishKey
                                 <div className={styles.itemTitle}>
                                     <p>{friend.name}</p>
                                     {!friend.status && friend.key && (
-                                        <button type='button' onClick={() => acceptRequest(index)}>Accept Request</button>
+                                        <button type='button' onClick={() => sendAndAcceptRequests(index)}>Accept Request</button>
                                     )}
                                     {friend.status && !friend.key && (
                                         <span className={styles.pending}>Pending request...</span>
                                     )}
                                     {!friend.status && !friend.key && (
-                                        <button type='button' onClick={() => sendRequest(index)}>Send Request</button>
+                                        <button type='button' onClick={() => sendAndAcceptRequests(index)}>Send Request</button>
                                     )}
                                 </div>
                             </div>
@@ -83,21 +103,11 @@ const FriendList = ({ friends, setFriends, onItemClick, onGroupClick, publishKey
 
     return (
         <div className={styles.container}>
-            <h5 className={styles.title}>Groups: </h5>
-            {checkAllFriendsAdded() && (
-                <div 
-                    className={styles.item} 
-                    onClick={() => onClickGroup()} 
-                >
-                    <img src='user.png' alt='user' />
-                    <div className={styles.itemInfo}>
-                        <div className={styles.itemTitle}>
-                            <p>devs</p>
-                        </div>
-                    </div>
-                </div>
-            )}
-            <h5 className={styles.title}>Users</h5>
+            <div className={styles.searchGroup}>
+                <input value={search} onChange={(onChangeSearch)} />
+                <button type='button' onClick={() => addFriend()}>Add User</button>
+            </div>
+            <h5 className={styles.title}>Friends</h5>
             <div className={styles.list}>
                 {renderFriends()}
             </div>

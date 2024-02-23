@@ -34,7 +34,6 @@ const RegistrationPage = () => {
         const response = await UserService.register(username, pwd);
         setRegistered(true);
         setUserId(response);
-        console.log(response);
       }
     } catch (error) {
         console.log(error);

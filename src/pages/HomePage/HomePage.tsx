@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import FriendList from '../../components/FriendList/FriendList';
 import Topbar from '../../components/Topbar/Topbar';
 import styles from './HomePage.module.css';
-import { User, users } from '../../services/User.service';
+import { User } from '../../services/User.service';
 import Chat from '../../components/Chat/Chat';
 import { KeyService } from '../../services/Key.service';
 import { RabbitMQService } from '../../services/RabbitMQ.service';
@@ -23,7 +23,7 @@ type MsgContent = {
         receiver: string,
         date?: string,
         message?: any,
-        publickey?: Uint8Array
+        publickey?: string,
         chatName?: string;
     }
 };
@@ -37,8 +37,8 @@ interface HomePageProps {
 const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
     const [currentFriend, setCurrentFriend] = useState<User>();
     const [group, setGroup] = useState(false);
-    const [privKey, setPrivKey] = useState<Uint8Array>(new Uint8Array());
-    const [publicKey, setPublicKey] = useState<Uint8Array>(new Uint8Array());
+    const [privKey, setPrivKey] = useState<string>('');
+    const [publicKey, setPublicKey] = useState<string>('');
     const [user, setUser] = useState<User>();
     const [pendingMsg, setPendingMsg] = useState('');
     const [friendsList, setFriendsList] = useState<User[]>([]);
@@ -54,11 +54,14 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
 
         const getKeys = (username: string) => {
             const infoString = localStorage.getItem(username);
-            let keys: { privateKey: Uint8Array, publicKey: Uint8Array };
+            let keys: { privateKey: string, publicKey: string };
             if (!infoString) keys =  generateKeys(username);
             else {
                 const userInfo: UserInfo = JSON.parse(infoString);
-                keys = { privateKey: new Uint8Array(JSON.parse(userInfo.privateKey)), publicKey: new Uint8Array(JSON.parse(userInfo.publicKey)) }
+                keys = {
+                    privateKey: userInfo.privateKey,
+                    publicKey: userInfo.publicKey
+                }
             }
             setPrivKey(keys.privateKey);
             setPublicKey(keys.publicKey);
@@ -72,8 +75,10 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
             const publicKey = KeyService.genPublicKey(privateKey);
             console.log(`CHAVE PRIVADA: ${privateKey}`);
             console.log(`CHAVE PUBLICA: ${publicKey}`);
-            localStorage.setItem(username, JSON.stringify({ privateKey: JSON.stringify(Array.from(privateKey)), publicKey: JSON.stringify(Array.from(publicKey)), messages: []}));
-            return { privateKey, publicKey };
+            const privKeyStr = JSON.stringify(Array.from(privateKey));
+            const pubKeyStr = JSON.stringify(Array.from(publicKey));
+            localStorage.setItem(username, JSON.stringify({ privateKey: privKeyStr, publicKey: pubKeyStr, messages: []}));
+            return { privateKey: privKeyStr, publicKey: pubKeyStr };
         };
 
         getUser();
@@ -82,25 +87,10 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
     useEffect(() => {
         const getFriends = () => {
             if (!user) return;
-                const list: User[] = [];
-                for (let i=0; i<users.length; i++) {
-                    if (users[i].username !== user.name) {
-                        const friendLocalInfo = localStorage.getItem(`${user.name}-${users[i].username}`);
-                        if (!friendLocalInfo) {
-                            list.push(users[i]);
-                        }
-                        else {
-                            const infoParsed = JSON.parse(friendLocalInfo);
-                            if (infoParsed.key) {
-                                list.push({...infoParsed, key: JSON.parse(infoParsed.key)});
-                            }
-                            else {
-                                list.push({...infoParsed});
-                            }
-                        }
-                    }
-                }
-                setFriendsList(list);
+            const friendLocalInfo = localStorage.getItem(`${user.name}-friends`);
+            if (!friendLocalInfo) return;
+            const list = JSON.parse(friendLocalInfo);
+            setFriendsList(list);
         };
         getFriends();
     }, [user]);
@@ -111,7 +101,7 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
             data: {
                 sender: user.name,
                 receiver: friend.username,
-                publickey: Array.from(publicKey),
+                publickey: publicKey,
             }
         };
         const data = JSON.stringify(obj);
@@ -119,14 +109,8 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
     }
 
     useEffect(() => {
-        if (!user) return;
-        for (let i=0; i<friendsList.length; i++) {
-            const friend: any = friendsList[i];
-            if (friend.key) {
-                friend.key = JSON.stringify(Array.from(friend.key));
-            }
-            localStorage.setItem(`${user.name}-${friend.username}`, JSON.stringify(friend));
-        }
+        if (!user || !friendsList) return;
+        localStorage.setItem(`${user.name}-friends`, JSON.stringify(friendsList));
     }, [friendsList]);
 
     const newMessageFromQueue = (msg: string) => {
@@ -150,19 +134,29 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
     const handleFriendsKeys = (object: MsgContent) => {
         if (!object.data.publickey || !user) return;
         console.log('RECEBENDO CHAVE DE AMIGO');
-        const newFriendsList = [...friendsList];
+        const newFriendsList = friendsList.map((friend) => friend);
+        let found = false;
         for (let i=0; i<newFriendsList.length; i++) {
             if (object.data.sender === newFriendsList[i].username) {
-                if (newFriendsList[i].key) return;
-                newFriendsList[i].key = new Uint8Array(Array.from(object.data.publickey));
-                publishKey(newFriendsList[i]);
+                newFriendsList[i].key = object.data.publickey;
+                found = true;
             };
         };
+        if (!found) {
+            const name = object.data.sender || '';
+            newFriendsList.push({
+                name: name[0].toUpperCase() + name.slice(1),
+                key: object.data.publickey,
+                status: false,
+                username: name,
+                password: 'XXXX',
+            });
+        }
         setFriendsList(newFriendsList);
     };
 
     const handleFriendsMessages = (object: MsgContent) => {
-        const dataStored = localStorage.getItem(`${object.data.receiver}-${object.data.sender}-msgs`);
+        const dataStored = localStorage.getItem(`${object.data.receiver}-${object.data.sender}`);
         const messages = !dataStored ? [] : JSON.parse(dataStored) as Message[];
 
         messages.push({
@@ -171,7 +165,7 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
             fromFriend: true,
             status: '0'
         });
-        localStorage.setItem(`${object.data.receiver}-${object.data.sender}-msgs`, JSON.stringify(messages));
+        localStorage.setItem(`${object.data.receiver}-${object.data.sender}`, JSON.stringify(messages));
         setForceUpdate(true);
     }
 
@@ -221,9 +215,7 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
             </header>
             <div className={styles.content}>
                 <div>
-                    {users &&  
-                        <FriendList friends={friendsList} setFriends={setFriendsList} onItemClick={handleFriendListClick} onGroupClick={handleGroupClick} publishKey={publishKey} />                    
-                    }
+                    <FriendList friends={friendsList} setFriends={setFriendsList} onItemClick={handleFriendListClick} onGroupClick={handleGroupClick} publishKey={publishKey} />                    
                 </div>
                 <div>
                     {group ? (

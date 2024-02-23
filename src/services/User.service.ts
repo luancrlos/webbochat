@@ -12,36 +12,12 @@ export interface User {
     name: string;
     status: boolean;
     username: string;
-    id: string;
+    id?: string;
     password: string;
     messages?: Message[];
-    key?: Uint8Array;
+    key?: string;
     isClicked?: boolean;
 }
-
-export const users: User[] = [
-    {
-        name: 'Amanda Serique Pinheiro',
-        status: false,
-        username: 'amanda',
-        password: '1234',
-        id: 'a8fb5490-b7c9-444b-b207-248c75db3685',
-    },
-    {
-        name: 'Roberto Alves Neto',
-        status: false,
-        username: 'roberto',
-        password: '1234',
-        id: '66e5',
-    },
-    {
-        name: 'Luan',
-        status: false,
-        username: 'luan',
-        password: '1234',
-        id: '93ef',
-    }
-];
 
 export abstract class UserService {
  
@@ -62,8 +38,8 @@ export abstract class UserService {
         });
     }
     
-    static async search(username: string) {
-        return await request('get', API.URL + '', {
+    static async search(username: string): Promise<{ name: string }> {
+        return await request('get', API.URL + '/user/' + username, {
             //
 		});
 	}

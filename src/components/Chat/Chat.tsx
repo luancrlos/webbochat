@@ -8,8 +8,8 @@ import ICheckmark from '../SVG/Checkmark';
 interface ChatProps {
     friend?: User;
     user?: User;
-    privKey: Uint8Array;
-    publicKey: Uint8Array;
+    privKey: string;
+    publicKey: string;
     forceUpdate: boolean;
     setForceUpdate: React.Dispatch<React.SetStateAction<boolean>>
 }
@@ -25,7 +25,7 @@ const Chat = ({ user, friend, privKey, publicKey, forceUpdate, setForceUpdate }:
         if (!friend  || !friend.key || !user) return;
         const friendKey = friend.key;
         setMessages([]);
-        const data = localStorage.getItem(`${user.name}-${friend.username}-msgs`);
+        const data = localStorage.getItem(`${user.name}-${friend.username}`);
         if (!data) return;
         const obj = JSON.parse(data) as Message[];
         const handledData = obj.map((value) => {
@@ -73,7 +73,7 @@ const Chat = ({ user, friend, privKey, publicKey, forceUpdate, setForceUpdate }:
     };
     
     const saveToCache = (mList: Message[]) => {
-        localStorage.setItem(`${user?.name}-${friend?.username}-msgs`, JSON.stringify(mList));
+        localStorage.setItem(`${user?.name}-${friend?.username}`, JSON.stringify(mList));
     };
 
     const renderMessages = () => {

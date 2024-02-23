@@ -12,7 +12,7 @@ export interface Message {
 
 export class MessageService {
 
-    static sendMessage = (message: string, privKey: Uint8Array, friendKey: Uint8Array, id: string, friendId: string, group: boolean = false) => {
+    static sendMessage = (message: string, privKey: string, friendKey: string, id: string, friendId: string, group: boolean = false) => {
         const secretDecoded = this.getSecret(privKey, friendKey);
         console.log('Shared secret gerado. Enviando mensagem...');
         const cipherParams = CryptoJS.AES.encrypt(JSON.stringify({message}), secretDecoded);
@@ -27,16 +27,21 @@ export class MessageService {
         RabbitMQService.publish('message/send', data);
     };
 
-    static decodeMessage = (cipherText: string, privKey: Uint8Array, friendKey: Uint8Array) => {
-        const secret = this.getSecret(privKey, friendKey);
-        const object = CryptoJS.AES.decrypt(cipherText, secret).toString(CryptoJS.enc.Utf8);
-        if (!object) return cipherText;
-        return JSON.parse(object).message;
+    static decodeMessage = (cipherText: string, privKey: string, friendKey: string) => {
+        try {
+            const secret = this.getSecret(privKey, friendKey);
+            const object = CryptoJS.AES.decrypt(cipherText, secret).toString(CryptoJS.enc.Utf8);
+            if (!object) return cipherText;
+            return JSON.parse(object).message;
+        } catch(error) {
+            return ''
+        }
     }
 
-    private static getSecret = (privKey: Uint8Array, friendKey: Uint8Array) => {
-        const fKey = friendKey.toString();
-        const sharedSecret = secp.getSharedSecret(privKey, new Uint8Array(JSON.parse(fKey)));
+    private static getSecret = (privKey: string, friendKey: string) => {
+        const pKey = new Uint8Array(JSON.parse(privKey));
+        const fKey = new Uint8Array(JSON.parse(friendKey));
+        const sharedSecret = secp.getSharedSecret(pKey, fKey);
         return new TextDecoder().decode(sharedSecret);
     }
 }

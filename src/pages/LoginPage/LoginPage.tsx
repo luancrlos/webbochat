@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { UserService } from '../../services/User.service';
 import styles from './LoginPage.module.css';
-import { users } from '../../services/User.service';
 
 export interface LoginProps {
   firstLogin: boolean;

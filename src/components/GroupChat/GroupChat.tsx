@@ -7,8 +7,8 @@ import ICheckmark from '../SVG/Checkmark';
 interface ChatProps {
     user?: User;
     friends?: User[];
-    privKey: Uint8Array;
-    publicKey: Uint8Array;
+    privKey: string;
+    publicKey: string;
     forceUpdate: boolean;
     setForceUpdate: React.Dispatch<React.SetStateAction<boolean>>
 }
@@ -71,7 +71,7 @@ const GroupChat = ({ user, privKey, publicKey, forceUpdate, setForceUpdate, frie
         e.preventDefault();
         if (!newMsg || !friends) return;
         for (let i=0; i<friends.length; i++) {
-            MessageService.sendMessage(newMsg, privKey, friends[i].key || new Uint8Array(), user?.username || '', friends[i]?.username || '', true);
+            MessageService.sendMessage(newMsg, privKey, friends[i].key || '', user?.username || '', friends[i]?.username || '', true);
         }
         const mList: GroupMessage[] = [...messages, {
             content: newMsg,
