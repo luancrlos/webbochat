@@ -23,7 +23,7 @@ type MsgContent = {
         receiver: string,
         date?: string,
         message?: any,
-        publickey?: string,
+        key?: string,
         chatName?: string;
     }
 };
@@ -132,13 +132,13 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
     useEffect(connectToQueue, [user]);
 
     const handleFriendsKeys = (object: MsgContent) => {
-        if (!object.data.publickey || !user) return;
+        if (!object.data.key || !user) return;
         console.log('RECEBENDO CHAVE DE AMIGO');
         const newFriendsList = friendsList.map((friend) => friend);
         let found = false;
         for (let i=0; i<newFriendsList.length; i++) {
             if (object.data.sender === newFriendsList[i].username) {
-                newFriendsList[i].key = object.data.publickey;
+                newFriendsList[i].key = object.data.key;
                 found = true;
             };
         };
@@ -146,7 +146,7 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
             const name = object.data.sender || '';
             newFriendsList.push({
                 name: name[0].toUpperCase() + name.slice(1),
-                key: object.data.publickey,
+                key: object.data.key,
                 status: false,
                 username: name,
                 password: 'XXXX',
@@ -189,7 +189,7 @@ const HomePage = ({firstLogin, setFirstLogin}: HomePageProps) => {
 
         const dataParsed: MsgContent = JSON.parse(pendingMsg);
         if (!dataParsed || !dataParsed.data) return;
-        if (dataParsed.data.publickey) handleFriendsKeys(dataParsed);
+        if (dataParsed.data.key) handleFriendsKeys(dataParsed);
         else if (dataParsed.data.chatName !== "false") handleGroupMessages(dataParsed);
         else handleFriendsMessages(dataParsed);
         
